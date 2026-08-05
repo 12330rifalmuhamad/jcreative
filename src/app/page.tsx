@@ -1,69 +1,56 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+
+import { useState } from 'react';
+import Navbar from '@/components/Navbar';
+import Hero from '@/components/Hero';
+import Statement from '@/components/Statement';
+import ShowcaseGrid from '@/components/ShowcaseGrid';
+import Creatives from '@/components/Creatives';
+import StoriesBanner from '@/components/StoriesBanner';
+import ContactSection from '@/components/ContactSection';
+import Footer from '@/components/Footer';
+import ShowreelModal from '@/components/ShowreelModal';
 
 export default function Home() {
+  const [isReelOpen, setIsReelOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+      {/* Header Navigation */}
+      <Navbar onOpenContact={() => setIsContactModalOpen(true)} />
+
+      {/* Fullscreen Hero Slider */}
+      <Hero onOpenReel={() => setIsReelOpen(true)} />
+
+      {/* Motion & Stills Production Statement */}
+      <Statement />
+
+      {/* 2x2 Full Bleed Featured Works Grid */}
+      <ShowcaseGrid />
+
+      {/* World Class Creatives Representation */}
+      <Creatives />
+
+      {/* J Creative Stories Banner */}
+      <StoriesBanner onOpenReel={() => setIsReelOpen(true)} />
+
+      {/* Contact Section */}
+      <ContactSection />
+
+      {/* Minimal Footer */}
+      <Footer />
+
+      {/* Lightbox Showreel Modal */}
+      <ShowreelModal isOpen={isReelOpen} onClose={() => setIsReelOpen(false)} />
+
+      {/* Contact Modal */}
+      {isContactModalOpen && (
+        <ContactSection
+          isModal={true}
+          onCloseModal={() => setIsContactModalOpen(false)}
         />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }

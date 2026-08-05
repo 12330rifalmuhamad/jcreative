@@ -1,0 +1,13 @@
+<svg width="400" height="200" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left arc / J curve element -->
+  <path d="M 60 102 C 60 72 82 50 110 50 L 140 50 L 140 82 L 115 82 C 105 82 95 90 95 102 L 95 110 L 60 110 Z" fill="currentColor"/>
+  
+  <!-- Outer C arc curve element -->
+  <path d="M 215 63 C 170 63 134 99 134 144 C 134 189 170 225 215 225 L 215 186 C 192 186 173 167 173 144 C 173 121 192 102 215 102 L 215 63 Z" fill="currentColor" transform="translate(0, -44)"/>
+
+  <!-- Creative. Text -->
+  <text x="190" y="108" font-family="Plus Jakarta Sans, Inter, system-ui, sans-serif" font-weight="800" font-size="34" letter-spacing="-1" fill="currentColor">Creative.</text>
+
+  <!-- Division Text -->
+  <text x="264" y="138" font-family="Plus Jakarta Sans, Inter, system-ui, sans-serif" font-weight="700" font-size="20" letter-spacing="-0.5" fill="currentColor">Division</text>
+</svg>
