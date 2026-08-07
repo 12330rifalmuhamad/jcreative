@@ -39,7 +39,7 @@ export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
         {/* Video Player Display Container */}
         <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
           <img
-            src="/images/hero_cinematic.png"
+            src="/images/DSC03485.jpg"
             alt="Showreel Preview"
             className={`w-full h-full object-cover filter contrast-125 ${
               isPlaying ? 'brightness-100 scale-100' : 'brightness-50 scale-105'

@@ -4,27 +4,27 @@ export default function Team() {
   const teamMembers = [
     {
       name: 'M. Rifaldi',
-      role: 'Executive Producer & Director',
-      bio: 'Sutradara spesialis iklan komersial & film brand dengan pengalaman 10+ tahun dalam visual storytelling berkelas dunia.',
-      highlights: '120+ Commercials Directed',
+      role: 'Head of Event Documentation & Director',
+      bio: 'Pengarah liputan konser & festival musik skala besar dengan pengalaman 10+ tahun mengabadikan momen panggung utama.',
+      highlights: '150+ Major Events Covered',
     },
     {
       name: 'Reza V.',
-      role: 'Director of Photography (DP)',
-      bio: 'Pakar sinematografi anamorphic 8K dengan spesialisasi pencahayaan tinggi untuk otomotif dan video musik.',
-      highlights: 'ARRI & RED Master Certified',
+      role: 'Lead Event Videographer & Multicam Specialist',
+      bio: 'Pakar pengambilan gambar multi-kamera 8K & drone sinematik untuk konser, stadium tour, dan summit internasional.',
+      highlights: 'Multicam & Drone Master',
     },
     {
       name: 'Dimas A.',
-      role: 'Senior Colorist & Post Lead',
-      bio: 'Colorist senior lulusan London Film Academy yang menangani master grade film bioskop & video musik internasional.',
-      highlights: 'DaVinci Certified Color Master',
+      role: 'Express Event Editor & Colorist',
+      bio: 'Editor senior penyaji video aftermovie sinematik express (24-Hour Turnaround) & finishing colorist DaVinci Resolve.',
+      highlights: 'DaVinci Color Specialist',
     },
     {
       name: 'Siti N.',
-      role: 'Production Designer & Art Director',
-      bio: 'Pengarah artistik dengan keahlian membangun set komersial mewah dan atmosfer surealis untuk kampanye brand.',
-      highlights: '50+ Custom Sets Built',
+      role: 'Lead Event Photographer & Photo Director',
+      bio: 'Fotografer event senior berpengalaman menangkap momen candid penonton, aksi panggung utama, dan corporate VIP.',
+      highlights: '500k+ Event Shots Captured',
     },
   ];
 

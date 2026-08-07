@@ -9,12 +9,12 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "J Creative Division | Premier Film & Production House",
-  description: "J Creative Division is an elite production house specializing in high-end commercial films, music videos, brand documentaries, and 8K visual storytelling.",
-  keywords: ["Production House", "J Creative Division", "Commercial Film", "Music Video", "Cinematography", "Jakarta Production House", "Video Production"],
+  title: "J Creative Division | Event Documentation & Media Production",
+  description: "J Creative Division spesialis dokumentasi event profesional, liputan konser, corporate gathering, konferensi, dan video aftermovie sinematik.",
+  keywords: ["Dokumentasi Event", "J Creative Division", "Event Documentation", "Video Aftermovie", "Liputan Konser", "Corporate Event Coverage", "Dokumentasi Gathering"],
   openGraph: {
-    title: "J Creative Division | Production House",
-    description: "Crafting Cinematic Masterpieces & High-Impact Visual Stories",
+    title: "J Creative Division | Event Documentation Studio",
+    description: "Dokumentasi Event Profesional, Live Highlights & Video Recap Sinematik",
     type: "website",
   },
 };

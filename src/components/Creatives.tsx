@@ -5,26 +5,28 @@ export default function Creatives() {
     <section id="talents" className="py-24 px-8 sm:px-12 bg-black text-white border-t border-white/10">
       <div className="max-w-7xl mx-auto space-y-8">
         <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-none">
-          We Represent World Class Creatives
+          World Class Event Videographers &amp; Crew
         </h2>
 
         <div className="max-w-2xl text-slate-300 text-sm sm:text-base font-light leading-relaxed space-y-4">
           <p>
-            J Creative works with visionary international and local{' '}
+            J Creative didukung oleh tim spesialis liputan event profesional:{' '}
             <a href="#contact" className="underline decoration-white underline-offset-4 text-white font-medium hover:text-slate-300">
-              Directors
-            </a>{' '}
-            <a href="#contact" className="underline decoration-white underline-offset-4 text-white font-medium hover:text-slate-300">
-              DOP
-            </a>{' '}
-            <a href="#contact" className="underline decoration-white underline-offset-4 text-white font-medium hover:text-slate-300">
-              Photographers
+              Event Directors
             </a>
-            . We are lucky to work with incredibly talented creatives from all over the world, each with their individual and unique style.
+            ,{' '}
+            <a href="#contact" className="underline decoration-white underline-offset-4 text-white font-medium hover:text-slate-300">
+              Multicam Operators
+            </a>
+            ,{' '}
+            <a href="#contact" className="underline decoration-white underline-offset-4 text-white font-medium hover:text-slate-300">
+              Event Photographers
+            </a>
+            , dan Drone Pilots. Tim kami berpengalaman mengabadikan puluhan festival besar, konser, dan konferensi skala internasional.
           </p>
 
           <p>
-            Most based in Indonesia but others close by and ready to jump on a plane at a moment&apos;s notice.
+            Berbasis di Indonesia dan siap diterjunkan ke lokasi event Anda di mana saja dengan kesiapan peralatan dan tim yang responsif.
           </p>
         </div>
       </div>

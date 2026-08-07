@@ -108,13 +108,13 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
             Let&apos;s Create Together
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 font-light leading-relaxed">
-            Ready to bring your commercial, music video, or brand documentary vision to life? Connect with our executive producers in Jakarta.
+            Ready to bring your commercial, music video, or brand documentary vision to life? Connect with our executive producers.
           </p>
 
           <div className="pt-6 space-y-2 text-xs font-mono text-slate-400 border-t border-white/10">
-            <div><strong className="text-white">EMAIL:</strong> producer@jcreativedivision.com</div>
-            <div><strong className="text-white">WHATSAPP:</strong> +62 812 9900 8877</div>
-            <div><strong className="text-white">LOCATION:</strong> Jakarta &amp; Singapore</div>
+            <div><strong className="text-white">EMAIL:</strong> -</div>
+            <div><strong className="text-white">WHATSAPP:</strong> -</div>
+            <div><strong className="text-white">LOCATION:</strong> -</div>
           </div>
         </div>
 

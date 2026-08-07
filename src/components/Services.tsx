@@ -4,23 +4,23 @@ export default function Services() {
   const divisions = [
     {
       id: '01',
-      title: 'Commercial Film & TVC',
-      desc: 'Pengarahan film komersial berskala besar untuk TVC, kampanye digital, dan billboard LED 3D.',
+      title: 'Concert & Festival Coverage',
+      desc: 'Liputan konser musik dan festival dengan sistem multi-kamera 8K, live switching, dan rekaman audio stereo master.',
     },
     {
       id: '02',
-      title: 'Music Video & Fashion Film',
-      desc: 'Visualisasi musik dan estetika sinematik unik dengan komposisi ritmis berkarakter kuat.',
+      title: 'Corporate Event & Gathering',
+      desc: 'Dokumentasi konferensi, summit, corporate gathering, gala dinner, dan peluncuran produk secara profesional.',
     },
     {
       id: '03',
-      title: 'Brand Documentary',
-      desc: 'Pengangkatan cerita naratif autentik di balik pendirian brand dan profil maestro.',
+      title: 'Cinema Event Aftermovie',
+      desc: 'Pembuatan video recap dan teaser sinematik dengan ritme editing cepat (Express 24-Hour Turnaround).',
     },
     {
       id: '04',
-      title: 'Post & Color Grade Studio',
-      desc: 'Master Color Grading DaVinci Resolve, penyuntingan ritmis, dan pengolahan audio 5.1/Dolby.',
+      title: 'On-Site Photography & Drone',
+      desc: 'Dokumentasi foto event resolusi tinggi, cetak cepat on-site, serta liputan udara (aerial drone coverage).',
     },
   ];
 

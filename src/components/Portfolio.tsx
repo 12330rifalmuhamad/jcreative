@@ -14,28 +14,28 @@ export default function Portfolio() {
 
   const projects: Project[] = [
     {
-      title: 'THE VELOCITY OF SILENCE',
-      category: 'Commercial Film',
-      client: 'Apex Motors',
-      image: '/images/work_commercial.png',
+      title: 'SOLOIST SPOTLIGHT TOUR',
+      category: 'Live Concert Documentation',
+      client: 'Apex Live',
+      image: '/images/DSC03481.jpg',
     },
     {
-      title: 'SOLITUDE IN HARMONY',
-      category: 'Music Video',
-      client: 'Universal Music',
-      image: '/images/work_music_video.png',
+      title: 'GLOBAL TECH SUMMIT 2026',
+      category: 'Corporate Conference Coverage',
+      client: 'Tech Asia',
+      image: '/images/DSC03611.jpg',
     },
     {
-      title: 'CRAFTSMEN OF ETERNITY',
-      category: 'Brand Documentary',
-      client: 'Heritage Atelier',
-      image: '/images/work_documentary.png',
+      title: 'INTERNATIONAL MUSIC FESTIVAL',
+      category: 'Festival Aftermovie & Multicam',
+      client: 'Heritage Events',
+      image: '/images/DSC03638.jpg',
     },
     {
-      title: 'NIGHT REEL // METROPOLIS',
-      category: 'Commercial Film',
-      client: 'Omni Cybernetics',
-      image: '/images/bts_set.png',
+      title: 'ANNUAL GALA & AWARDING',
+      category: 'Gala Dinner & Event Highlights',
+      client: 'Omni Group',
+      image: '/images/DSC03689.jpg',
     },
   ];
 

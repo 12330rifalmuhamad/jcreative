@@ -9,19 +9,19 @@ interface HeroProps {
 export default function Hero({ onOpenReel }: HeroProps) {
   const slides = [
     {
-      title: "alkateri 'live in concert'",
-      category: "Music Video & Live Performance Film",
-      image: "/images/hero.png",
+      title: "CRAFTING UNFORGETTABLE EXPERIENCES",
+      category: "Premier Visual Storytelling & Production Studio",
+      image: "/images/DSC03485.jpg",
     },
     {
-      title: "apex 'the velocity'",
-      category: "Commercial Film",
-      image: "/images/work_commercial.png",
+      title: "ELEVATE YOUR VISUAL IDENTITY",
+      category: "World-Class Cinematography & Media Excellence",
+      image: "/images/DSC03481.jpg",
     },
     {
-      title: "heritage 'craftsmen'",
-      category: "Brand Narrative",
-      image: "/images/work_documentary.png",
+      title: "WHERE PASSION MEETS PRECISION",
+      category: "End-to-End Creative Film & Media Production",
+      image: "/images/DSC03563.jpg",
     },
   ];
 
@@ -61,7 +61,7 @@ export default function Hero({ onOpenReel }: HeroProps) {
             onClick={onOpenReel}
             className="group mt-8 inline-flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-white hover:text-slate-300 transition-colors cursor-pointer"
           >
-            <span>WATCH FILM</span>
+            <span>WATCH EVENT REEL</span>
             <span className="w-8 h-px bg-white group-hover:w-12 transition-all" />
           </button>
         </div>

@@ -4,27 +4,27 @@ export default function ProcessTimeline() {
   const steps = [
     {
       num: '01',
-      title: 'Konsultasi & Konsep Kreatif',
-      subtitle: 'BRIEF & TREATMENT',
-      desc: 'Bedah brief dari agensi/brand, penyusunan konsep naratif, moodboard visual sinematik, serta penulisan skrip awal.',
+      title: 'Brief & Event Rundown',
+      subtitle: 'BRIEF & SHOT-LIST PLANNING',
+      desc: 'Konsultasi konsep liputan, pemetaan rundown acara, pemetaan titik kamera panggung utama, serta penetapan daftar momen krusial.',
     },
     {
       num: '02',
-      title: 'Pra-Produksi & Casting',
-      subtitle: 'PRE-PRODUCTION & RECCE',
-      desc: 'Perekrutan talenta, riset lokasi syuting, pembentukan storyboard rinci per frame, dan penentuan spesifikasi kamera.',
+      title: 'Persiapan Teknis Venue',
+      subtitle: 'RECCE & SYSTEM CHECK',
+      desc: 'Pemeriksaan sistem multi-kamera, sinergi audio board venue, pemasangan drone aerial, dan briging kru teknis sebelum acara.',
     },
     {
       num: '03',
-      title: 'Pengambilan Gambar Utama',
-      subtitle: 'PRINCIPAL PHOTOGRAPHY',
-      desc: 'Eksekusi syuting dengan standar bioskop 8K Anamorphic, penyutradaraan profesional, dan pencahayaan studio terukur.',
+      title: 'On-Site Live Coverage',
+      subtitle: 'REAL-TIME EVENT FILMING',
+      desc: 'Eksekusi liputan lapangan secara real-time menangkap aksi panggung utama, ekspresi penonton, tamu VIP, dan atmosfer acara.',
     },
     {
       num: '04',
-      title: 'Pasca-Produksi & Mastering',
-      subtitle: 'COLOR GRADE & DELIVERY',
-      desc: 'Penyuntingan ritmis, Master Color Grading DaVinci Resolve, mixing audio 5.1/Dolby, dan penyerahan file master 8K HDR.',
+      title: 'Express Edit & Aftermovie',
+      subtitle: 'EXPRESS EDIT & DELIVERY',
+      desc: 'Penyuntingan cepat (Express 24-Hour Edit), DaVinci Color Grading sinematik, serta penyerahan master video recap & foto event.',
     },
   ];
 

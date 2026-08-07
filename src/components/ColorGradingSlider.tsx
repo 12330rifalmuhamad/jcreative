@@ -39,7 +39,7 @@ export default function ColorGradingSlider() {
             RAW LOG VS. <span className="text-slate-400">MASTER COLOR GRADE</span>
           </h2>
           <p className="text-slate-400 text-sm font-light mt-4 leading-relaxed">
-            Geser slider interaktif di bawah untuk melihat transformasi footage mentah (ARRI LogC4 / RED Log3G10) menjadi hasil akhir kelas layar lebar.
+            Geser slider interaktif di bawah untuk melihat transformasi rekaman mentah event (RAW LOG) menjadi hasil akhir video aftermovie berkelas sinema dengan warna panggung yang hidup.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function ColorGradingSlider() {
           {/* AFTER Image (Final Master Grade) */}
           <div className="absolute inset-0 w-full h-full">
             <img
-              src="/images/bts_set.png"
+              src="/images/DSC03689.jpg"
               alt="Final Master Color Grade"
               className="w-full h-full object-cover filter contrast-125 brightness-105"
             />
@@ -72,7 +72,7 @@ export default function ColorGradingSlider() {
             style={{ width: `${sliderPosition}%` }}
           >
             <img
-              src="/images/bts_set.png"
+              src="/images/DSC03689.jpg"
               alt="RAW Flat LOG Footage"
               className="absolute inset-0 w-full h-full object-cover filter brightness-125 contrast-50 saturate-50 sepia-0"
               style={{

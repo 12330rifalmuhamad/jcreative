@@ -82,14 +82,14 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             {/* 1. Project Type Selector */}
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                1. Jjenis Proyek Sinematik:
+                1. Jenis Event &amp; Dokumentasi:
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'commercial', label: 'Iklan TVC / Digital' },
-                  { id: 'music_video', label: 'Video Musik' },
-                  { id: 'brand_film', label: 'Brand Film' },
-                  { id: 'documentary', label: 'Dokumenter' },
+                  { id: 'commercial', label: 'Konser & Festival Musik' },
+                  { id: 'music_video', label: 'Corporate Gathering & Summit' },
+                  { id: 'brand_film', label: 'Exhibition & Awarding Night' },
+                  { id: 'documentary', label: 'Conference & Private Event' },
                 ].map((type) => (
                   <button
                     key={type.id}
@@ -110,7 +110,7 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             <div>
               <div className="flex justify-between items-center mb-3">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                  2. Durasi Syuting (Hari):
+                  2. Durasi Acara (Hari):
                 </label>
                 <span className="text-sm font-black text-white font-mono">{shootingDays} Hari</span>
               </div>
@@ -123,7 +123,7 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
                 className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                <span>1 Hari</span>
+                <span>1 Hari (Half/Full Day)</span>
                 <span>3 Hari</span>
                 <span>7 Hari</span>
               </div>
@@ -132,13 +132,13 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             {/* 3. Gear & Resolution Package */}
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                3. Paket Kamera &amp; Optik:
+                3. Paket Kamera &amp; Tim Liputan:
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { id: 'standard', title: '4K Standard', sub: 'Sony FX9 / Canon C300' },
-                  { id: 'anamorphic', title: '8K Anamorphic', sub: 'RED V-Raptor + Cooke' },
-                  { id: 'master', title: 'ARRI Cinema Master', sub: 'Alexa Mini LF + Master' },
+                  { id: 'standard', title: 'Single / Dual Cam', sub: 'Sony FX3/FX6 + 2 Crew' },
+                  { id: 'anamorphic', title: 'Multicam System', sub: '3-4 Cam + Audio Feed' },
+                  { id: 'master', title: 'Cinema Full Crew', sub: 'Multicam + Drone + Live Stream' },
                 ].map((pkg) => (
                   <button
                     key={pkg.id}
@@ -159,14 +159,14 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             {/* 4. Post-Production Addons */}
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                4. Layanan Tambahan (Pasca-Produksi):
+                4. Layanan Tambahan (Event Add-ons):
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { key: 'colorGrading', label: 'Master Color Grading (DaVinci)' },
-                  { key: 'aerialDrone', label: 'Sinematografi Udara 8K Drone' },
-                  { key: 'vfx3d', label: '3D CGI & Motion FX' },
-                  { key: 'audioScoring', label: 'Musik Scoring Orisinal' },
+                  { key: 'colorGrading', label: 'Express 24-Hour Aftermovie Edit' },
+                  { key: 'aerialDrone', label: 'Aerial Drone Event Coverage' },
+                  { key: 'vfx3d', label: 'Foto Highlight & Color Correct' },
+                  { key: 'audioScoring', label: 'Audio Multitrack Live Board Record' },
                 ].map((addon) => (
                   <label
                     key={addon.key}
