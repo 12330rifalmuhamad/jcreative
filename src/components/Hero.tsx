@@ -49,10 +49,10 @@ export default function Hero({ onOpenReel }: HeroProps) {
 
       {/* Main Title & Action Overlay (Baliprod Style) */}
       <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-12 w-full pt-24 sm:pt-16">
-        <div className="max-w-3xl">
-          <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.1] mb-4 break-words uppercase">
+        <div className="max-w-5xl lg:max-w-6xl">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight text-white leading-[1.08] mb-4 uppercase whitespace-normal break-normal">
             {slides[currentSlide].title}{' '}
-            <span className="block text-base sm:text-3xl lg:text-5xl font-light opacity-90 text-slate-300 mt-3 sm:mt-4 leading-snug normal-case">
+            <span className="block text-base sm:text-2xl md:text-3xl lg:text-4xl font-light opacity-90 text-slate-300 mt-3 sm:mt-4 leading-snug normal-case">
               {slides[currentSlide].category}
             </span>
           </h1>
