@@ -25,14 +25,14 @@ export default function ShowcaseGrid() {
       id: 'item-2',
       title: 'Outdoor Festival Experience',
       subtitle: 'Global Music Festival Series',
-      image: '/images/DSC03563.jpg',
+      image: '/images/DSC02059.jpg',
       category: 'Festival Film',
     },
     {
       id: 'item-3',
       title: 'Soloist Arena World Tour',
       subtitle: 'Live Spotlight Performance',
-      image: '/images/DSC03611.jpg',
+      image: '/images/DSC02163.jpg',
       category: 'Arena Tour',
     },
     {

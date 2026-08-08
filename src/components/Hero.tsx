@@ -21,7 +21,7 @@ export default function Hero({ onOpenReel }: HeroProps) {
     {
       title: "WHERE PASSION MEETS PRECISION",
       category: "End-to-End Creative Film & Media Production",
-      image: "/images/DSC03563.jpg",
+      image: "/images/DSC02194.jpg",
     },
   ];
 
@@ -93,8 +93,8 @@ export default function Hero({ onOpenReel }: HeroProps) {
             onClick={() => setCurrentSlide(idx)}
             aria-label={`Slide ${idx + 1}`}
             className={`h-6 transition-all duration-300 ${currentSlide === idx
-                ? 'w-1 bg-white'
-                : 'w-[2px] bg-white/30 hover:bg-white/60'
+              ? 'w-1 bg-white'
+              : 'w-[2px] bg-white/30 hover:bg-white/60'
               }`}
           />
         ))}
