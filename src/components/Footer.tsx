@@ -13,8 +13,16 @@ export default function Footer() {
           <span className="text-[10px] text-slate-500">© 2026 J CREATIVE DIVISION. ALL RIGHTS RESERVED.</span>
         </div>
 
-        <div className="flex items-center gap-8 text-[11px] font-bold">
-          <a href="#" className="hover:text-white transition-colors">INSTAGRAM</a>
+        <div className="flex flex-wrap items-center gap-6 sm:gap-8 text-[11px] font-bold">
+          <a
+            href="https://www.instagram.com/j.creative.official/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white hover:text-slate-300 transition-colors flex items-center gap-1.5"
+          >
+            <span>INSTAGRAM</span>
+            <span className="text-[9px] opacity-70">↗</span>
+          </a>
           <a href="#" className="hover:text-white transition-colors">VIMEO</a>
           <a href="#" className="hover:text-white transition-colors">YOUTUBE CINEMA</a>
           <a href="#" className="hover:text-white transition-colors">LINKEDIN</a>

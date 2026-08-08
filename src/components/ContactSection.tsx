@@ -112,6 +112,17 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
           </p>
 
           <div className="pt-6 space-y-2 text-xs font-mono text-slate-400 border-t border-white/10">
+            <div>
+              <strong className="text-white">INSTAGRAM:</strong>{' '}
+              <a
+                href="https://www.instagram.com/j.creative.official/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-300 hover:text-white underline decoration-white/30 underline-offset-4 transition-colors"
+              >
+                @j.creative.official ↗
+              </a>
+            </div>
             <div><strong className="text-white">EMAIL:</strong> -</div>
             <div><strong className="text-white">WHATSAPP:</strong> -</div>
             <div><strong className="text-white">LOCATION:</strong> -</div>
