@@ -52,7 +52,7 @@ export default function ShowcaseGrid() {
           <div
             key={item.id}
             onClick={() => setActiveItem(item)}
-            className="group relative aspect-[16/10] overflow-hidden bg-black cursor-pointer border-b border-r border-white/10"
+            className="group relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-black cursor-pointer border-b border-r border-white/10"
           >
             {/* Background Image */}
             <img
@@ -60,22 +60,22 @@ export default function ShowcaseGrid() {
               alt={item.title}
               className="w-full h-full object-cover filter contrast-125 brightness-90 group-hover:scale-105 transition-transform duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:bg-black/40 transition-colors" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent group-hover:bg-black/40 transition-colors" />
 
             {/* Typography Overlay (Baliprod Style) */}
-            <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-end">
-              <span className="text-xs font-mono uppercase tracking-widest text-slate-300 block mb-2 opacity-80">
+            <div className="absolute inset-0 p-5 sm:p-12 flex flex-col justify-end">
+              <span className="text-[10px] sm:text-xs font-mono uppercase tracking-widest text-slate-300 block mb-1 sm:mb-2 opacity-80">
                 {item.category}
               </span>
-              <h3 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none mb-2">
+              <h3 className="text-xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-1 sm:mb-2 break-words">
                 {item.title}
               </h3>
-              <p className="text-sm font-light text-slate-300">
+              <p className="text-xs sm:text-sm font-light text-slate-300">
                 {item.subtitle}
               </p>
 
               {/* View Circle Button */}
-              <div className="absolute bottom-8 right-8 w-14 h-14 rounded-full border border-white/40 bg-black/40 backdrop-blur-xs text-white font-semibold text-xs flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-black transition-all">
+              <div className="absolute bottom-5 right-5 w-10 h-10 sm:w-14 sm:h-14 rounded-full border border-white/40 bg-black/40 backdrop-blur-xs text-white font-semibold text-[10px] sm:text-xs flex items-center justify-center group-hover:scale-110 group-hover:bg-white group-hover:text-black transition-all">
                 View
               </div>
             </div>

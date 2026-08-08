@@ -6,7 +6,7 @@ interface StoriesBannerProps {
 
 export default function StoriesBanner({ onOpenReel }: StoriesBannerProps) {
   return (
-    <section id="stories" className="relative w-full min-h-[80vh] bg-black overflow-hidden flex items-center px-8 sm:px-12 py-24">
+    <section id="stories" className="relative w-full min-h-[60vh] sm:min-h-[80vh] bg-black overflow-hidden flex items-center px-5 sm:px-12 py-16 sm:py-24">
       {/* Background Media */}
       <div className="absolute inset-0 z-0">
         <img
@@ -19,8 +19,8 @@ export default function StoriesBanner({ onOpenReel }: StoriesBannerProps) {
 
       {/* Content Overlay */}
       <div className="relative z-10 max-w-7xl mx-auto w-full">
-        <div className="max-w-xl space-y-6">
-          <h2 className="text-5xl sm:text-7xl font-bold tracking-tight text-white leading-none">
+        <div className="max-w-xl space-y-4 sm:space-y-6">
+          <h2 className="text-3xl sm:text-7xl font-bold tracking-tight text-white leading-tight break-words">
             J Creative Event Stories
           </h2>
 

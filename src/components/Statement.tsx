@@ -2,11 +2,11 @@
 
 export default function Statement() {
   return (
-    <section id="about" className="py-28 px-8 sm:px-12 bg-black text-white border-t border-white/10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+    <section id="about" className="py-16 sm:py-28 px-5 sm:px-12 bg-black text-white border-t border-white/10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-start">
         {/* Left Giant Title */}
         <div className="lg:col-span-6">
-          <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.05]">
+          <h2 className="text-3xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.1] break-words">
             Specialist Event Documentation &amp; Media Production
           </h2>
         </div>

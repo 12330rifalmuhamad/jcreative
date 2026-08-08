@@ -48,18 +48,18 @@ export default function Hero({ onOpenReel }: HeroProps) {
       </div>
 
       {/* Main Title & Action Overlay (Baliprod Style) */}
-      <div className="relative z-10 max-w-7xl mx-auto px-8 sm:px-12 w-full pt-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-12 w-full pt-24 sm:pt-16">
         <div className="max-w-3xl">
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tight text-white leading-[1.05] mb-4">
+          <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.1] mb-4 break-words uppercase">
             {slides[currentSlide].title}{' '}
-            <span className="block text-3xl sm:text-5xl font-normal opacity-90 text-slate-300 mt-2">
+            <span className="block text-base sm:text-3xl lg:text-5xl font-light opacity-90 text-slate-300 mt-3 sm:mt-4 leading-snug normal-case">
               {slides[currentSlide].category}
             </span>
           </h1>
 
           <button
             onClick={onOpenReel}
-            className="group mt-8 inline-flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-white hover:text-slate-300 transition-colors cursor-pointer"
+            className="group mt-6 sm:mt-8 inline-flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-white hover:text-slate-300 transition-colors cursor-pointer"
           >
             <span>WATCH EVENT REEL</span>
             <span className="w-8 h-px bg-white group-hover:w-12 transition-all" />
@@ -67,7 +67,7 @@ export default function Hero({ onOpenReel }: HeroProps) {
         </div>
 
         {/* Bottom Left Slide Navigation Buttons */}
-        <div className="mt-16 flex items-center gap-3">
+        <div className="mt-8 sm:mt-16 flex items-center gap-3">
           <button
             onClick={prevSlide}
             aria-label="Previous Slide"

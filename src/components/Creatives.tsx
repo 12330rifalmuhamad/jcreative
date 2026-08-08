@@ -2,9 +2,9 @@
 
 export default function Creatives() {
   return (
-    <section id="talents" className="py-24 px-8 sm:px-12 bg-black text-white border-t border-white/10">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <h2 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-none">
+    <section id="talents" className="py-16 sm:py-24 px-5 sm:px-12 bg-black text-white border-t border-white/10">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <h2 className="text-3xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-tight break-words">
           World Class Event Videographers &amp; Crew
         </h2>
 

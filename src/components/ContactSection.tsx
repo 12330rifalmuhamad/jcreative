@@ -101,10 +101,10 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
   }
 
   return (
-    <section id="contact" className="py-28 px-8 sm:px-12 bg-black text-white border-t border-white/10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+    <section id="contact" className="py-16 sm:py-28 px-5 sm:px-12 bg-black text-white border-t border-white/10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-start">
         <div className="lg:col-span-5 space-y-6">
-          <h2 className="text-4xl sm:text-6xl font-bold tracking-tight uppercase text-white leading-none">
+          <h2 className="text-3xl sm:text-6xl font-bold tracking-tight uppercase text-white leading-tight break-words">
             Let&apos;s Create Together
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 font-light leading-relaxed">
@@ -118,7 +118,7 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-[#0a0a0d] border border-white/15 p-8 sm:p-10">
+        <div className="lg:col-span-7 bg-[#0a0a0d] border border-white/15 p-5 sm:p-10 rounded-2xl">
           {formElement}
         </div>
       </div>
