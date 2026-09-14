@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface Project {
   title: string;
@@ -60,11 +61,14 @@ export default function Portfolio() {
             onClick={() => setSelectedProject(project)}
             className="group relative bg-[#0f0f14] border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-white/30 transition-all"
           >
-            <div className="aspect-[16/10] overflow-hidden">
-              <img
+            <div className="relative aspect-[16/10] overflow-hidden bg-black/40">
+              <Image
                 src={project.image}
                 alt={project.title}
-                className="w-full h-full object-cover filter contrast-125 group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                loading="lazy"
+                className="object-cover filter contrast-125 group-hover:scale-105 transition-transform duration-500"
               />
             </div>
             <div className="p-5 flex items-center justify-between">
@@ -86,14 +90,22 @@ export default function Portfolio() {
       {selectedProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
           <div className="relative w-full max-w-2xl bg-[#0e0e13] border border-white/20 rounded-2xl overflow-hidden">
-            <img src={selectedProject.image} alt={selectedProject.title} className="w-full aspect-video object-cover" />
+            <div className="relative w-full aspect-video">
+              <Image
+                src={selectedProject.image}
+                alt={selectedProject.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 672px"
+                className="object-cover"
+              />
+            </div>
             <div className="p-6">
               <span className="text-xs font-mono text-slate-400 block mb-1">{selectedProject.category}</span>
               <h3 className="text-2xl font-bold text-white mb-2">{selectedProject.title}</h3>
               <p className="text-xs text-slate-300">Klien: {selectedProject.client}</p>
               <button
                 onClick={() => setSelectedProject(null)}
-                className="mt-6 w-full py-2.5 bg-white text-black font-bold text-xs uppercase tracking-wider rounded-lg"
+                className="mt-6 w-full py-2.5 bg-white text-black font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 Tutup
               </button>

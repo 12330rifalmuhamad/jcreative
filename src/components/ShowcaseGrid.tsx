@@ -1,48 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-
-interface ShowcaseItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  image: string;
-  category: string;
-}
+import Image from 'next/image';
+import { useContent, ShowcaseItem } from '@/context/ContentContext';
 
 export default function ShowcaseGrid() {
   const [activeItem, setActiveItem] = useState<ShowcaseItem | null>(null);
+  const { showcaseItems } = useContent();
 
-  const items: ShowcaseItem[] = [
-    {
-      id: 'item-1',
-      title: 'Cinematic Stage & Concert Production',
-      subtitle: 'Unforgettable Live Music Experiences',
-      image: '/images/DSC03485.jpg',
-      category: 'Brand Slogan & Vision',
-    },
-    {
-      id: 'item-2',
-      title: 'Outdoor Festival Experience',
-      subtitle: 'Global Music Festival Series',
-      image: '/images/DSC02059.jpg',
-      category: 'Festival Film',
-    },
-    {
-      id: 'item-3',
-      title: 'Soloist Arena World Tour',
-      subtitle: 'Live Spotlight Performance',
-      image: '/images/DSC02163.jpg',
-      category: 'Arena Tour',
-    },
-    {
-      id: 'item-4',
-      title: 'Showreel Concert 2026',
-      subtitle: 'J Creative Live Master Reel',
-      image: '/images/DSC03638.jpg',
-      category: 'Official Reel',
-    },
-  ];
+  const items = showcaseItems;
 
   return (
     <section id="work" className="bg-black text-white w-full border-t border-white/10">
@@ -55,10 +21,13 @@ export default function ShowcaseGrid() {
             className="group relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-black cursor-pointer border-b border-r border-white/10"
           >
             {/* Background Image */}
-            <img
+            <Image
               src={item.image}
               alt={item.title}
-              className="w-full h-full object-cover filter contrast-125 brightness-90 group-hover:scale-105 transition-transform duration-700"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              loading="lazy"
+              className="object-cover filter contrast-125 brightness-90 group-hover:scale-105 transition-transform duration-700"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent group-hover:bg-black/40 transition-colors" />
 
@@ -88,10 +57,16 @@ export default function ShowcaseGrid() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-6">
           <div className="relative w-full max-w-4xl bg-[#0c0c10] border border-white/20 rounded-2xl overflow-hidden">
             <div className="relative aspect-video">
-              <img src={activeItem.image} alt={activeItem.title} className="w-full h-full object-cover" />
+              <Image
+                src={activeItem.image}
+                alt={activeItem.title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 896px"
+                className="object-cover"
+              />
               <button
                 onClick={() => setActiveItem(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-white hover:text-black transition-colors"
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/80 text-white flex items-center justify-center hover:bg-white hover:text-black transition-colors"
               >
                 ✕
               </button>

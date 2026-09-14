@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, MouseEvent, TouchEvent } from 'react';
+import Image from 'next/image';
 
 export default function ColorGradingSlider() {
   const [sliderPosition, setSliderPosition] = useState(50);
@@ -55,33 +56,42 @@ export default function ColorGradingSlider() {
         >
           {/* AFTER Image (Final Master Grade) */}
           <div className="absolute inset-0 w-full h-full">
-            <img
+            <Image
               src="/images/DSC03689.jpg"
               alt="Final Master Color Grade"
-              className="w-full h-full object-cover filter contrast-125 brightness-105"
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              loading="lazy"
+              className="object-cover filter contrast-125 brightness-105"
             />
             {/* Label Badge Right */}
-            <div className="absolute top-6 right-6 bg-white/90 text-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-wider shadow-lg">
+            <div className="absolute top-6 right-6 z-10 bg-white/90 text-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-wider shadow-lg">
               FINAL MASTER GRADE [LUT J-CINEMA 01]
             </div>
           </div>
 
           {/* BEFORE Image (RAW Flat LOG) */}
           <div
-            className="absolute inset-0 h-full overflow-hidden"
+            className="absolute inset-0 h-full overflow-hidden z-10"
             style={{ width: `${sliderPosition}%` }}
           >
-            <img
-              src="/images/DSC03689.jpg"
-              alt="RAW Flat LOG Footage"
-              className="absolute inset-0 w-full h-full object-cover filter brightness-125 contrast-50 saturate-50 sepia-0"
+            <div
+              className="relative h-full"
               style={{
                 width: containerRef.current ? `${containerRef.current.clientWidth}px` : '100%',
-                maxWidth: 'none',
               }}
-            />
+            >
+              <Image
+                src="/images/DSC03689.jpg"
+                alt="RAW Flat LOG Footage"
+                fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                loading="lazy"
+                className="object-cover filter brightness-125 contrast-50 saturate-50 sepia-0"
+              />
+            </div>
             {/* Label Badge Left */}
-            <div className="absolute top-6 left-6 bg-black/80 backdrop-blur-md text-slate-300 border border-white/20 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-wider">
+            <div className="absolute top-6 left-6 z-10 bg-black/80 backdrop-blur-md text-slate-300 border border-white/20 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-wider">
               RAW LOG FOOTAGE [ARRI LogC4]
             </div>
           </div>

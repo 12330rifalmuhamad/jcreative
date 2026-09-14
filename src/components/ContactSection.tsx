@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useContent } from '@/context/ContentContext';
 
 interface ContactProps {
   isModal?: boolean;
@@ -9,9 +10,23 @@ interface ContactProps {
 
 export default function ContactSection({ isModal = false, onCloseModal }: ContactProps) {
   const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState('');
+  const [agency, setAgency] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+
+  const { addInquiry } = useContent();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    addInquiry({
+      name,
+      email,
+      phone,
+      service: agency ? `Brand/Agency: ${agency}` : 'General Inquiry',
+      message,
+    });
     setSubmitted(true);
   };
 
@@ -27,8 +42,15 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
             Our producers at J Creative Division will contact you within 24 hours.
           </p>
           <button
-            onClick={() => setSubmitted(false)}
-            className="px-6 py-2 bg-white text-black text-xs font-bold uppercase rounded"
+            onClick={() => {
+              setSubmitted(false);
+              setName('');
+              setAgency('');
+              setEmail('');
+              setPhone('');
+              setMessage('');
+            }}
+            className="px-6 py-2 bg-white text-black text-xs font-bold uppercase rounded hover:bg-slate-200 transition-colors"
           >
             Submit Another Brief
           </button>
@@ -39,14 +61,18 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
             <input
               type="text"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Your Name *"
-              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white"
+              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white rounded"
             />
             <input
               type="text"
               required
+              value={agency}
+              onChange={(e) => setAgency(e.target.value)}
               placeholder="Brand / Agency *"
-              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white"
+              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white rounded"
             />
           </div>
 
@@ -54,27 +80,33 @@ export default function ContactSection({ isModal = false, onCloseModal }: Contac
             <input
               type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Work Email *"
-              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white"
+              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white rounded"
             />
             <input
               type="tel"
               required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               placeholder="WhatsApp / Phone *"
-              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white"
+              className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white rounded"
             />
           </div>
 
           <textarea
             rows={4}
             required
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
             placeholder="Project Details / Brief..."
-            className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white"
+            className="w-full px-4 py-3 bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-white rounded"
           />
 
           <button
             type="submit"
-            className="w-full py-4 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors"
+            className="w-full py-4 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors rounded"
           >
             Send Project Brief →
           </button>

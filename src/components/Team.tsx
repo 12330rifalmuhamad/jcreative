@@ -1,35 +1,13 @@
 'use client';
 
+import Image from 'next/image';
+import { useContent } from '@/context/ContentContext';
+
 export default function Team() {
-  const teamMembers = [
-    {
-      name: 'M. Rifaldi',
-      role: 'Head of Event Documentation & Director',
-      bio: 'Pengarah liputan konser & festival musik skala besar dengan pengalaman 10+ tahun mengabadikan momen panggung utama.',
-      highlights: '150+ Major Events Covered',
-    },
-    {
-      name: 'Reza V.',
-      role: 'Lead Event Videographer & Multicam Specialist',
-      bio: 'Pakar pengambilan gambar multi-kamera 8K & drone sinematik untuk konser, stadium tour, dan summit internasional.',
-      highlights: 'Multicam & Drone Master',
-    },
-    {
-      name: 'Dimas A.',
-      role: 'Express Event Editor & Colorist',
-      bio: 'Editor senior penyaji video aftermovie sinematik express (24-Hour Turnaround) & finishing colorist DaVinci Resolve.',
-      highlights: 'DaVinci Color Specialist',
-    },
-    {
-      name: 'Siti N.',
-      role: 'Lead Event Photographer & Photo Director',
-      bio: 'Fotografer event senior berpengalaman menangkap momen candid penonton, aksi panggung utama, dan corporate VIP.',
-      highlights: '500k+ Event Shots Captured',
-    },
-  ];
+  const { teamMembers } = useContent();
 
   return (
-    <section className="py-24 bg-[#09090d] border-t border-white/10 relative">
+    <section id="members" className="py-24 bg-[#09090d] border-t border-white/10 relative scroll-mt-16">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 border-b border-white/10 pb-8">
@@ -38,7 +16,7 @@ export default function Team() {
               CREATIVE DIRECTORS &amp; CREW
             </span>
             <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-white mt-2">
-              TIM KREATIF <span className="text-slate-400">UTAMA</span>
+              TIM &amp; <span className="text-slate-400">ANGGOTA KREATIF</span>
             </h2>
           </div>
           <p className="text-slate-400 text-sm max-w-md mt-4 md:mt-0 font-light leading-relaxed">
@@ -51,27 +29,59 @@ export default function Team() {
           {teamMembers.map((member, idx) => (
             <div
               key={idx}
-              className="bg-[#121218] border border-white/10 rounded-2xl p-6 hover:border-white/30 transition-all group flex flex-col justify-between"
+              className="bg-[#121218] border border-white/10 rounded-2xl overflow-hidden hover:border-white/30 transition-all duration-300 group flex flex-col justify-between shadow-xl"
             >
               <div>
-                <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-black text-xl text-white mb-6 group-hover:scale-110 transition-transform">
-                  {member.name.charAt(0)}
+                {/* Profile Picture Container */}
+                <div className="relative w-full aspect-[4/5] overflow-hidden bg-white/5">
+                  <Image
+                    src={member.avatar}
+                    alt={member.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    loading="lazy"
+                    className="object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out filter brightness-95 contrast-105"
+                  />
+                  {/* Subtle Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#121218] via-transparent to-transparent opacity-90" />
+                  
+                  {/* Role Tag Overlay */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <span className="inline-block px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[10px] font-extrabold text-slate-200 uppercase tracking-wider">
+                      {member.role}
+                    </span>
+                  </div>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-white">{member.name}</h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1 mb-4">
-                  {member.role}
-                </p>
+                {/* Content Section */}
+                <div className="p-6 space-y-4">
+                  {/* Name */}
+                  <h3 className="text-xl font-extrabold text-white tracking-tight group-hover:text-amber-400/90 transition-colors">
+                    {member.name}
+                  </h3>
 
-                <p className="text-xs text-slate-300 font-light leading-relaxed mb-6">
-                  {member.bio}
-                </p>
+                  {/* Motto Hidup / Quote */}
+                  <div className="bg-white/[0.04] border-l-2 border-slate-400 p-3 rounded-r-xl">
+                    <p className="text-[11px] font-mono uppercase text-slate-400 font-bold tracking-wider mb-1">
+                      Motto Hidup
+                    </p>
+                    <p className="text-xs text-slate-200 font-light italic leading-relaxed">
+                      &ldquo;{member.motto}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Short Bio */}
+                  <p className="text-xs text-slate-400 font-light leading-relaxed">
+                    {member.bio}
+                  </p>
+                </div>
               </div>
 
-              <div className="pt-4 border-t border-white/10">
-                <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
-                  ★ {member.highlights}
-                </span>
+              {/* Card Footer / Highlights */}
+              <div className="px-6 pb-6 pt-2 border-t border-white/10 mt-auto">
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
+                  <span>★ {member.highlights}</span>
+                </div>
               </div>
             </div>
           ))}
@@ -80,3 +90,4 @@ export default function Team() {
     </section>
   );
 }
+

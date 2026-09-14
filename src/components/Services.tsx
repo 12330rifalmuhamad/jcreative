@@ -1,28 +1,11 @@
 'use client';
 
+import { useContent } from '@/context/ContentContext';
+
 export default function Services() {
-  const divisions = [
-    {
-      id: '01',
-      title: 'Concert & Festival Coverage',
-      desc: 'Liputan konser musik dan festival dengan sistem multi-kamera 8K, live switching, dan rekaman audio stereo master.',
-    },
-    {
-      id: '02',
-      title: 'Corporate Event & Gathering',
-      desc: 'Dokumentasi konferensi, summit, corporate gathering, gala dinner, dan peluncuran produk secara profesional.',
-    },
-    {
-      id: '03',
-      title: 'Cinema Event Aftermovie',
-      desc: 'Pembuatan video recap dan teaser sinematik dengan ritme editing cepat (Express 24-Hour Turnaround).',
-    },
-    {
-      id: '04',
-      title: 'On-Site Photography & Drone',
-      desc: 'Dokumentasi foto event resolusi tinggi, cetak cepat on-site, serta liputan udara (aerial drone coverage).',
-    },
-  ];
+  const { services } = useContent();
+
+  const divisions = services;
 
   return (
     <section id="divisi" className="py-20 px-6 max-w-6xl mx-auto border-t border-white/10">

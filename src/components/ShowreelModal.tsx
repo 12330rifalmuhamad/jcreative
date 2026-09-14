@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface ShowreelModalProps {
   isOpen: boolean;
@@ -18,12 +19,12 @@ export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 sm:p-8 animate-fadeIn">
       {/* Modal Card */}
       <div className="relative w-full max-w-5xl bg-[#0c0c10] border border-white/20 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-        {/* Modal Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#070709]">
+        {/* Top Header Bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-200">
-              J Creative Division // Official Reel 2026 [{quality}]
+            <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">
+              MASTER CINEMATIC REEL // 2026
             </span>
           </div>
 
@@ -38,10 +39,12 @@ export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
 
         {/* Video Player Display Container */}
         <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
-          <img
+          <Image
             src="/images/DSC03485.jpg"
             alt="Showreel Preview"
-            className={`w-full h-full object-cover filter contrast-125 ${
+            fill
+            sizes="(max-width: 1024px) 100vw, 1024px"
+            className={`object-cover filter contrast-125 ${
               isPlaying ? 'brightness-100 scale-100' : 'brightness-50 scale-105'
             } transition-all duration-700`}
           />

@@ -15,6 +15,7 @@ export default function Navbar({ onOpenContact }: NavbarProps) {
     { name: 'SERVICES', href: '#services' },
     { name: 'STORIES', href: '#stories' },
     { name: 'TALENTS', href: '#talents' },
+    { name: 'MEMBERS', href: '#members' },
     { name: 'ABOUT', href: '#about' },
   ];
 

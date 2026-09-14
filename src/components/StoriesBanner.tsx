@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 interface StoriesBannerProps {
   onOpenReel: () => void;
 }
@@ -9,10 +11,13 @@ export default function StoriesBanner({ onOpenReel }: StoriesBannerProps) {
     <section id="stories" className="relative w-full min-h-[60vh] sm:min-h-[80vh] bg-black overflow-hidden flex items-center px-5 sm:px-12 py-16 sm:py-24">
       {/* Background Media */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="/images/DSC03481.jpg"
           alt="J Creative Stories"
-          className="w-full h-full object-cover filter contrast-125 brightness-60"
+          fill
+          sizes="100vw"
+          loading="lazy"
+          className="object-cover filter contrast-125 brightness-60"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
       </div>

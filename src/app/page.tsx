@@ -6,6 +6,7 @@ import Hero from '@/components/Hero';
 import Statement from '@/components/Statement';
 import ShowcaseGrid from '@/components/ShowcaseGrid';
 import Creatives from '@/components/Creatives';
+import Team from '@/components/Team';
 import StoriesBanner from '@/components/StoriesBanner';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
@@ -31,6 +32,9 @@ export default function Home() {
 
       {/* World Class Creatives Representation */}
       <Creatives />
+
+      {/* Core Team & Member Cards */}
+      <Team />
 
       {/* J Creative Stories Banner */}
       <StoriesBanner onOpenReel={() => setIsReelOpen(true)} />

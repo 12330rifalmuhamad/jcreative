@@ -26,6 +26,12 @@ export default function Footer() {
           <a href="#" className="hover:text-white transition-colors">VIMEO</a>
           <a href="#" className="hover:text-white transition-colors">YOUTUBE CINEMA</a>
           <a href="#" className="hover:text-white transition-colors">LINKEDIN</a>
+          <a
+            href="/admin"
+            className="px-3 py-1 bg-white/10 text-white rounded hover:bg-white hover:text-black transition-all text-[10px] tracking-wider"
+          >
+            ⚙ ADMIN PANEL
+          </a>
         </div>
       </div>
     </footer>
