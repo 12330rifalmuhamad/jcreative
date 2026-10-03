@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface TeamMember {
   id: string;
@@ -43,7 +43,7 @@ const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
     id: 'member-1',
     name: 'M. Rifaldi',
     role: 'Head of Event Documentation & Director',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+    avatar: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997522/jcreative/team/rifaldi.jpg',
     motto: 'Abadikan emosi murni, sajikan cerita sinematik yang abadi di setiap detik karya.',
     bio: 'Pengarah liputan konser & festival musik skala besar dengan pengalaman 10+ tahun mengabadikan momen panggung utama.',
     highlights: '150+ Major Events Covered',
@@ -52,7 +52,7 @@ const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
     id: 'member-2',
     name: 'Reza V.',
     role: 'Lead Event Videographer & Multicam Specialist',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+    avatar: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997522/jcreative/team/reza.jpg',
     motto: 'Presisi dalam pergerakan kamera, kesempurnaan visual di setiap bingkai 8K.',
     bio: 'Pakar pengambilan gambar multi-kamera 8K & drone sinematik untuk konser, stadium tour, dan summit internasional.',
     highlights: 'Multicam & Drone Master',
@@ -61,7 +61,7 @@ const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
     id: 'member-3',
     name: 'Siti N.',
     role: 'Lead Event Photographer & Photo Director',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+    avatar: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997523/jcreative/team/siti.jpg',
     motto: 'Satu ketukan shutter mampu membekukan keajaiban panggung menjadi sejarah abadi.',
     bio: 'Fotografer event senior berpengalaman menangkap momen candid penonton, aksi panggung utama, dan corporate VIP.',
     highlights: '500k+ Event Shots Captured',
@@ -70,7 +70,7 @@ const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
     id: 'member-4',
     name: 'Dimas A.',
     role: 'Express Event Editor & Colorist',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80',
+    avatar: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997524/jcreative/team/dimas.jpg',
     motto: 'Ritme potongan gambar dan kedalaman warna adalah jiwa dari sebuah Aftermovie.',
     bio: 'Editor senior penyaji video aftermovie sinematik express (24-Hour Turnaround) & finishing colorist DaVinci Resolve.',
     highlights: 'DaVinci Color Specialist',
@@ -82,28 +82,28 @@ const DEFAULT_SHOWCASE_ITEMS: ShowcaseItem[] = [
     id: 'item-1',
     title: 'Cinematic Stage & Concert Production',
     subtitle: 'Unforgettable Live Music Experiences',
-    image: '/images/DSC03485.jpg',
+    image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
     category: 'Brand Slogan & Vision',
   },
   {
     id: 'item-2',
     title: 'Outdoor Festival Experience',
     subtitle: 'Global Music Festival Series',
-    image: '/images/DSC02059.jpg',
+    image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997517/jcreative/showcase/dsc02059.jpg',
     category: 'Festival Film',
   },
   {
     id: 'item-3',
     title: 'Soloist Arena World Tour',
     subtitle: 'Live Spotlight Performance',
-    image: '/images/DSC02163.jpg',
+    image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997518/jcreative/showcase/dsc02163.jpg',
     category: 'Arena Tour',
   },
   {
     id: 'item-4',
     title: 'Showreel Concert 2026',
     subtitle: 'J Creative Live Master Reel',
-    image: '/images/DSC03638.jpg',
+    image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997519/jcreative/showcase/dsc03638.jpg',
     category: 'Official Reel',
   },
 ];
@@ -141,7 +141,7 @@ const DEFAULT_INQUIRIES: Inquiry[] = [
     service: 'Concert & Festival Coverage',
     budget: 'Rp 50M - 100M',
     message: 'Kami ingin mengajukan liputan festival musik outdoor 3 hari di Bali dengan konsep 4K multicam & drone aftermovie.',
-    createdAt: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    createdAt: '1 Okt 2026, 14.30',
   },
 ];
 
@@ -150,16 +150,18 @@ interface ContentContextType {
   showcaseItems: ShowcaseItem[];
   services: ServiceItem[];
   inquiries: Inquiry[];
-  addTeamMember: (member: Omit<TeamMember, 'id'>) => void;
-  updateTeamMember: (id: string, member: Partial<TeamMember>) => void;
-  deleteTeamMember: (id: string) => void;
-  addShowcaseItem: (item: Omit<ShowcaseItem, 'id'>) => void;
-  updateShowcaseItem: (id: string, item: Partial<ShowcaseItem>) => void;
-  deleteShowcaseItem: (id: string) => void;
-  updateService: (id: string, service: Partial<ServiceItem>) => void;
-  addInquiry: (inquiry: Omit<Inquiry, 'id' | 'createdAt'>) => void;
-  deleteInquiry: (id: string) => void;
-  resetToDefault: () => void;
+  isLoading: boolean;
+  refreshContent: () => Promise<void>;
+  addTeamMember: (member: Omit<TeamMember, 'id'>) => Promise<void>;
+  updateTeamMember: (id: string, member: Partial<TeamMember>) => Promise<void>;
+  deleteTeamMember: (id: string) => Promise<void>;
+  addShowcaseItem: (item: Omit<ShowcaseItem, 'id'>) => Promise<void>;
+  updateShowcaseItem: (id: string, item: Partial<ShowcaseItem>) => Promise<void>;
+  deleteShowcaseItem: (id: string) => Promise<void>;
+  updateService: (id: string, service: Partial<ServiceItem>) => Promise<void>;
+  addInquiry: (inquiry: Omit<Inquiry, 'id' | 'createdAt'>) => Promise<void>;
+  deleteInquiry: (id: string) => Promise<void>;
+  resetToDefault: () => Promise<void>;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -176,84 +178,120 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [showcaseItems, setShowcaseItems] = useState<ShowcaseItem[]>(DEFAULT_SHOWCASE_ITEMS);
   const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
   const [inquiries, setInquiries] = useState<Inquiry[]>(DEFAULT_INQUIRIES);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load state from localStorage on mount
-  useEffect(() => {
+  // Fetch real content from server API
+  const refreshContent = useCallback(async () => {
     try {
-      const savedTeam = localStorage.getItem(STORAGE_KEYS.TEAM);
-      const savedShowcase = localStorage.getItem(STORAGE_KEYS.SHOWCASE);
-      const savedServices = localStorage.getItem(STORAGE_KEYS.SERVICES);
-      const savedInquiries = localStorage.getItem(STORAGE_KEYS.INQUIRIES);
+      const res = await fetch('/api/content');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          if (json.data.teamMembers) setTeamMembers(json.data.teamMembers);
+          if (json.data.showcaseItems) setShowcaseItems(json.data.showcaseItems);
+          if (json.data.services) setServices(json.data.services);
+          if (json.data.inquiries) setInquiries(json.data.inquiries);
 
-      if (savedTeam) setTeamMembers(JSON.parse(savedTeam));
-      if (savedShowcase) setShowcaseItems(JSON.parse(savedShowcase));
-      if (savedServices) setServices(JSON.parse(savedServices));
-      if (savedInquiries) setInquiries(JSON.parse(savedInquiries));
+          // Update cache in localStorage as secondary backup
+          try {
+            localStorage.setItem(STORAGE_KEYS.TEAM, JSON.stringify(json.data.teamMembers));
+            localStorage.setItem(STORAGE_KEYS.SHOWCASE, JSON.stringify(json.data.showcaseItems));
+            localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(json.data.services));
+            localStorage.setItem(STORAGE_KEYS.INQUIRIES, JSON.stringify(json.data.inquiries));
+          } catch (_) {}
+        }
+      }
     } catch (e) {
-      console.error('Failed to load content from localStorage', e);
+      console.warn('Failed to fetch from /api/content, checking localStorage fallback...', e);
+      try {
+        const savedTeam = localStorage.getItem(STORAGE_KEYS.TEAM);
+        const savedShowcase = localStorage.getItem(STORAGE_KEYS.SHOWCASE);
+        const savedServices = localStorage.getItem(STORAGE_KEYS.SERVICES);
+        const savedInquiries = localStorage.getItem(STORAGE_KEYS.INQUIRIES);
+
+        if (savedTeam) setTeamMembers(JSON.parse(savedTeam));
+        if (savedShowcase) setShowcaseItems(JSON.parse(savedShowcase));
+        if (savedServices) setServices(JSON.parse(savedServices));
+        if (savedInquiries) setInquiries(JSON.parse(savedInquiries));
+      } catch (localErr) {
+        console.error('LocalStorage read error:', localErr);
+      }
     } finally {
-      setIsLoaded(true);
+      setIsLoading(false);
     }
   }, []);
 
-  // Sync to localStorage
   useEffect(() => {
-    if (!isLoaded) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.TEAM, JSON.stringify(teamMembers));
-      localStorage.setItem(STORAGE_KEYS.SHOWCASE, JSON.stringify(showcaseItems));
-      localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-      localStorage.setItem(STORAGE_KEYS.INQUIRIES, JSON.stringify(inquiries));
-    } catch (e) {
-      console.error('Failed to save content to localStorage', e);
-    }
-  }, [teamMembers, showcaseItems, services, inquiries, isLoaded]);
+    refreshContent();
+  }, [refreshContent]);
 
-  const addTeamMember = (member: Omit<TeamMember, 'id'>) => {
-    const newMember: TeamMember = {
-      ...member,
-      id: `member-${Date.now()}`,
-    };
-    setTeamMembers((prev) => [newMember, ...prev]);
+  // Server sync helper
+  const syncAction = async (action: string, payload?: any) => {
+    try {
+      const res = await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payload }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          if (json.data.teamMembers) setTeamMembers(json.data.teamMembers);
+          if (json.data.showcaseItems) setShowcaseItems(json.data.showcaseItems);
+          if (json.data.services) setServices(json.data.services);
+          if (json.data.inquiries) setInquiries(json.data.inquiries);
+        }
+      }
+    } catch (e) {
+      console.error(`Sync action ${action} failed:`, e);
+    }
   };
 
-  const updateTeamMember = (id: string, updated: Partial<TeamMember>) => {
+  const addTeamMember = async (member: Omit<TeamMember, 'id'>) => {
+    const tempMember: TeamMember = { ...member, id: `member-${Date.now()}` };
+    setTeamMembers((prev) => [tempMember, ...prev]);
+    await syncAction('addTeamMember', member);
+  };
+
+  const updateTeamMember = async (id: string, updated: Partial<TeamMember>) => {
     setTeamMembers((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
     );
+    await syncAction('updateTeamMember', { id, member: updated });
   };
 
-  const deleteTeamMember = (id: string) => {
+  const deleteTeamMember = async (id: string) => {
     setTeamMembers((prev) => prev.filter((item) => item.id !== id));
+    await syncAction('deleteTeamMember', { id });
   };
 
-  const addShowcaseItem = (item: Omit<ShowcaseItem, 'id'>) => {
-    const newItem: ShowcaseItem = {
-      ...item,
-      id: `item-${Date.now()}`,
-    };
-    setShowcaseItems((prev) => [newItem, ...prev]);
+  const addShowcaseItem = async (item: Omit<ShowcaseItem, 'id'>) => {
+    const tempItem: ShowcaseItem = { ...item, id: `item-${Date.now()}` };
+    setShowcaseItems((prev) => [tempItem, ...prev]);
+    await syncAction('addShowcaseItem', item);
   };
 
-  const updateShowcaseItem = (id: string, updated: Partial<ShowcaseItem>) => {
+  const updateShowcaseItem = async (id: string, updated: Partial<ShowcaseItem>) => {
     setShowcaseItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
     );
+    await syncAction('updateShowcaseItem', { id, item: updated });
   };
 
-  const deleteShowcaseItem = (id: string) => {
+  const deleteShowcaseItem = async (id: string) => {
     setShowcaseItems((prev) => prev.filter((item) => item.id !== id));
+    await syncAction('deleteShowcaseItem', { id });
   };
 
-  const updateService = (id: string, updated: Partial<ServiceItem>) => {
+  const updateService = async (id: string, updated: Partial<ServiceItem>) => {
     setServices((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
     );
+    await syncAction('updateService', { id, service: updated });
   };
 
-  const addInquiry = (inquiry: Omit<Inquiry, 'id' | 'createdAt'>) => {
-    const newInquiry: Inquiry = {
+  const addInquiry = async (inquiry: Omit<Inquiry, 'id' | 'createdAt'>) => {
+    const tempInq: Inquiry = {
       ...inquiry,
       id: `inq-${Date.now()}`,
       createdAt: new Date().toLocaleDateString('id-ID', {
@@ -264,22 +302,21 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         minute: '2-digit',
       }),
     };
-    setInquiries((prev) => [newInquiry, ...prev]);
+    setInquiries((prev) => [tempInq, ...prev]);
+    await syncAction('addInquiry', inquiry);
   };
 
-  const deleteInquiry = (id: string) => {
+  const deleteInquiry = async (id: string) => {
     setInquiries((prev) => prev.filter((item) => item.id !== id));
+    await syncAction('deleteInquiry', { id });
   };
 
-  const resetToDefault = () => {
+  const resetToDefault = async () => {
     setTeamMembers(DEFAULT_TEAM_MEMBERS);
     setShowcaseItems(DEFAULT_SHOWCASE_ITEMS);
     setServices(DEFAULT_SERVICES);
     setInquiries(DEFAULT_INQUIRIES);
-    localStorage.removeItem(STORAGE_KEYS.TEAM);
-    localStorage.removeItem(STORAGE_KEYS.SHOWCASE);
-    localStorage.removeItem(STORAGE_KEYS.SERVICES);
-    localStorage.removeItem(STORAGE_KEYS.INQUIRIES);
+    await syncAction('resetToDefault');
   };
 
   return (
@@ -289,6 +326,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         showcaseItems,
         services,
         inquiries,
+        isLoading,
+        refreshContent,
         addTeamMember,
         updateTeamMember,
         deleteTeamMember,

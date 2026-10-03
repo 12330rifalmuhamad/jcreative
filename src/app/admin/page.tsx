@@ -1,8 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useContent, TeamMember, ShowcaseItem, ServiceItem, Inquiry } from '@/context/ContentContext';
+
+interface CloudinaryMediaItem {
+  public_id: string;
+  format: string;
+  bytes: number;
+  width: number;
+  height: number;
+  url: string;
+  secure_url: string;
+  created_at: string;
+}
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -17,7 +28,7 @@ export default function AdminPage() {
 
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'showcase' | 'services' | 'inquiries'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'showcase' | 'services' | 'inquiries' | 'media'>('overview');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const {
@@ -25,6 +36,8 @@ export default function AdminPage() {
     showcaseItems,
     services,
     inquiries,
+    isLoading: isContentLoading,
+    refreshContent,
     addTeamMember,
     updateTeamMember,
     deleteTeamMember,
@@ -36,6 +49,24 @@ export default function AdminPage() {
     resetToDefault,
   } = useContent();
 
+  // Cloudinary media state
+  const [cloudinaryMedia, setCloudinaryMedia] = useState<CloudinaryMediaItem[]>([]);
+  const [isMediaLoading, setIsMediaLoading] = useState<boolean>(false);
+  const [mediaSearchQuery, setMediaSearchQuery] = useState('');
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  // Upload state
+  const [uploadStatus, setUploadStatus] = useState<{
+    isUploading: boolean;
+    message: string;
+    target: 'member' | 'showcase' | 'media' | null;
+  }>({
+    isUploading: false,
+    message: '',
+    target: null,
+  });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   // Modals state
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -44,6 +75,10 @@ export default function AdminPage() {
   const [editingShowcase, setEditingShowcase] = useState<ShowcaseItem | null>(null);
 
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+
+  // Cloudinary Picker Modal state
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<'member' | 'showcase' | null>(null);
 
   // Form fields for Member
   const [memberForm, setMemberForm] = useState({
@@ -63,12 +98,42 @@ export default function AdminPage() {
     category: '',
   });
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  // Fetch Cloudinary media list
+  const fetchCloudinaryMedia = useCallback(async () => {
+    setIsMediaLoading(true);
+    try {
+      const res = await fetch('/api/media?limit=100');
+      const json = await res.json();
+      if (json.success && Array.isArray(json.resources)) {
+        setCloudinaryMedia(json.resources);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Cloudinary media:', err);
+    } finally {
+      setIsMediaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCloudinaryMedia();
+    }
+  }, [isAuthenticated, fetchCloudinaryMedia]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (passcode === 'admin123' || passcode.trim().toLowerCase() === 'admin') {
       sessionStorage.setItem('jcreative_admin_auth', 'true');
       setIsAuthenticated(true);
       setAuthError('');
+      fetchCloudinaryMedia();
     } else {
       setAuthError('Passcode salah. Silakan coba lagi (Default PIN: admin123)');
     }
@@ -77,6 +142,98 @@ export default function AdminPage() {
   const handleLogout = () => {
     sessionStorage.removeItem('jcreative_admin_auth');
     setIsAuthenticated(false);
+  };
+
+  // Real Upload to Cloudinary function
+  const uploadFileToCloudinary = async (file: File, folder: string = 'jcreative') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Gagal mengunggah file ke Cloudinary');
+    }
+
+    // Refresh media gallery
+    fetchCloudinaryMedia();
+    return data.secure_url as string;
+  };
+
+  // Handle direct file input upload
+  const handleUploadInput = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: 'member' | 'showcase' | 'media',
+    onSuccess?: (url: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const folderMap = {
+      member: 'jcreative/team',
+      showcase: 'jcreative/showcase',
+      media: 'jcreative/gallery',
+    };
+
+    setUploadStatus({
+      isUploading: true,
+      message: `Mengunggah ${file.name} ke Cloudinary CDN...`,
+      target,
+    });
+
+    try {
+      const secureUrl = await uploadFileToCloudinary(file, folderMap[target]);
+      if (onSuccess) {
+        onSuccess(secureUrl);
+      }
+      showToast(`✓ Foto berhasil diunggah ke Cloudinary!`);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Upload gagal: ${err.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setUploadStatus({
+        isUploading: false,
+        message: '',
+        target: null,
+      });
+      // reset file input
+      e.target.value = '';
+    }
+  };
+
+  // Handle copy Cloudinary URL
+  const handleCopyUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedUrl(url);
+    showToast('✓ URL Cloudinary berhasil disalin ke clipboard');
+    setTimeout(() => setCopiedUrl(null), 2500);
+  };
+
+  // Handle delete from Cloudinary
+  const handleDeleteCloudinary = async (publicId: string) => {
+    if (!confirm(`Hapus foto ${publicId} dari Cloudinary secara permanen?`)) return;
+
+    try {
+      const res = await fetch('/api/media', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_id: publicId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCloudinaryMedia((prev) => prev.filter((m) => m.public_id !== publicId));
+        showToast('✓ Foto berhasil dihapus dari Cloudinary');
+      } else {
+        alert(data.error || 'Gagal menghapus foto');
+      }
+    } catch (err: any) {
+      alert(`Gagal menghapus: ${err.message}`);
+    }
   };
 
   // Open member modal (Create or Edit)
@@ -96,7 +253,7 @@ export default function AdminPage() {
       setMemberForm({
         name: '',
         role: '',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+        avatar: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997522/jcreative/team/rifaldi.jpg',
         motto: '',
         bio: '',
         highlights: '',
@@ -105,12 +262,14 @@ export default function AdminPage() {
     setIsMemberModalOpen(true);
   };
 
-  const handleSaveMember = (e: React.FormEvent) => {
+  const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingMember) {
-      updateTeamMember(editingMember.id, memberForm);
+      await updateTeamMember(editingMember.id, memberForm);
+      showToast('✓ Data anggota tim berhasil diperbarui');
     } else {
-      addTeamMember(memberForm);
+      await addTeamMember(memberForm);
+      showToast('✓ Anggota tim baru berhasil ditambahkan');
     }
     setIsMemberModalOpen(false);
   };
@@ -130,52 +289,61 @@ export default function AdminPage() {
       setShowcaseForm({
         title: '',
         subtitle: '',
-        image: '/images/DSC03485.jpg',
+        image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
         category: 'Concert & Festival',
       });
     }
     setIsShowcaseModalOpen(true);
   };
 
-  const handleSaveShowcase = (e: React.FormEvent) => {
+  const handleSaveShowcase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingShowcase) {
-      updateShowcaseItem(editingShowcase.id, showcaseForm);
+      await updateShowcaseItem(editingShowcase.id, showcaseForm);
+      showToast('✓ Karya portofolio berhasil diperbarui');
     } else {
-      addShowcaseItem(showcaseForm);
+      await addShowcaseItem(showcaseForm);
+      showToast('✓ Karya portofolio baru berhasil ditambahkan');
     }
     setIsShowcaseModalOpen(false);
   };
 
   // Save edited service
-  const handleSaveService = (e: React.FormEvent) => {
+  const handleSaveService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingService) {
-      updateService(editingService.id, {
+      await updateService(editingService.id, {
         title: editingService.title,
         desc: editingService.desc,
       });
       setEditingService(null);
-    }
-  };
-  // Handle File Upload to Base64 Data URL
-  const handleFileUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (url: string) => void
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          onSuccess(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+      showToast('✓ Data layanan berhasil diperbarui');
     }
   };
 
-  // Minimalist Icons Definitions
+  // Open picker modal
+  const openCloudinaryPicker = (target: 'member' | 'showcase') => {
+    setPickerTarget(target);
+    setIsPickerOpen(true);
+  };
+
+  const handleSelectFromPicker = (url: string) => {
+    if (pickerTarget === 'member') {
+      setMemberForm((prev) => ({ ...prev, avatar: url }));
+    } else if (pickerTarget === 'showcase') {
+      setShowcaseForm((prev) => ({ ...prev, image: url }));
+    }
+    setIsPickerOpen(false);
+    showToast('✓ Foto Cloudinary terpilih!');
+  };
+
+  // Filtered media in gallery
+  const filteredMedia = cloudinaryMedia.filter((item) =>
+    item.public_id.toLowerCase().includes(mediaSearchQuery.toLowerCase()) ||
+    item.format.toLowerCase().includes(mediaSearchQuery.toLowerCase())
+  );
+
+  // Minimalist Icons
   const icons = {
     overview: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,6 +370,21 @@ export default function AdminPage() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
+    media: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    cloud: (
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+      </svg>
+    ),
+    upload: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg>
+    ),
     edit: (
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -210,6 +393,11 @@ export default function AdminPage() {
     delete: (
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    ),
+    copy: (
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
     ),
     external: (
@@ -234,7 +422,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 font-mono text-xs uppercase tracking-widest border-t border-white/10">
         <div className="flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-          <span>INITIALIZING ADMIN SYSTEM...</span>
+          <span>MEMUAT PANEL ADMIN...</span>
         </div>
       </div>
     );
@@ -250,13 +438,13 @@ export default function AdminPage() {
               {icons.lock}
             </div>
             <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400 block">
-              SYSTEM CONTROL
+              SYSTEM CONTROL &bull; CLOUDINARY CDN
             </span>
             <h1 className="text-2xl font-black uppercase tracking-tight text-white">
-              ADMIN ACCESS
+              ADMIN DASHBOARD
             </h1>
             <p className="text-xs text-slate-300 font-light leading-relaxed">
-              Masukkan Passcode Admin untuk mengelola konten website J Creative.
+              Panel Pengelolaan Konten Website &amp; Upload Media Cloudinary J Creative.
             </p>
           </div>
 
@@ -276,7 +464,7 @@ export default function AdminPage() {
             </div>
 
             {authError && (
-              <div className="p-3 bg-white/5 border border-white/20 rounded text-slate-300 text-xs font-mono">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded text-rose-300 text-xs font-mono">
                 {authError}
               </div>
             )}
@@ -285,7 +473,7 @@ export default function AdminPage() {
               type="submit"
               className="w-full py-4 bg-white text-black font-extrabold text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors cursor-pointer"
             >
-              Masuk Ke Admin Dashboard →
+              Masuk Ke Admin Dashboard &rarr;
             </button>
           </form>
 
@@ -294,7 +482,7 @@ export default function AdminPage() {
               href="/"
               className="text-xs font-mono text-slate-400 hover:text-white transition-colors uppercase tracking-wider inline-flex items-center gap-1.5"
             >
-              <span>← Kembali ke Website Utama</span>
+              <span>&larr; Kembali ke Website Utama</span>
             </Link>
           </div>
         </div>
@@ -306,12 +494,32 @@ export default function AdminPage() {
     { id: 'overview', label: 'OVERVIEW STATS', icon: icons.overview, badge: null },
     { id: 'members', label: 'ANGGOTA TIM', icon: icons.members, badge: teamMembers.length },
     { id: 'showcase', label: 'KARYA PORTOFOLIO', icon: icons.showcase, badge: showcaseItems.length },
+    { id: 'media', label: 'GALERI CLOUDINARY', icon: icons.media, badge: cloudinaryMedia.length },
     { id: 'services', label: 'DIVISI LAYANAN', icon: icons.services, badge: services.length },
     { id: 'inquiries', label: 'PESAN BRIEF', icon: icons.inquiries, badge: inquiries.length },
   ];
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col md:flex-row selection:bg-white selection:text-black font-sans">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-[100] px-5 py-3.5 bg-white text-black font-mono text-xs font-bold rounded-xl shadow-2xl flex items-center gap-3 animate-fadeIn border border-white/20">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Global Upload Overlay */}
+      {uploadStatus.isUploading && (
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 rounded-full border-2 border-white/20 border-t-white animate-spin mb-4" />
+          <p className="text-sm font-mono uppercase tracking-widest text-white font-bold mb-1">
+            MENGUNGGAH KE CLOUDINARY...
+          </p>
+          <p className="text-xs font-mono text-slate-400 max-w-sm">{uploadStatus.message}</p>
+        </div>
+      )}
+
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between px-6 py-4 bg-black border-b border-white/10 sticky top-0 z-50">
         <div className="flex items-center gap-3">
@@ -332,8 +540,8 @@ export default function AdminPage() {
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="space-y-8">
-          {/* Logo & Status */}
+        <div className="space-y-8 overflow-y-auto">
+          {/* Logo & Cloudinary Connected Status */}
           <div className="space-y-4 border-b border-white/10 pb-6">
             <Link href="/" className="flex items-center gap-3 group">
               <img
@@ -351,16 +559,27 @@ export default function AdminPage() {
               </div>
             </Link>
 
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/15 text-slate-300 text-[10px] font-mono font-bold tracking-wider uppercase">
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <span>SYSTEM ONLINE</span>
+            {/* Cloudinary CDN Indicator */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold tracking-wider uppercase rounded">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>CLOUDINARY CDN</span>
+                </div>
+                <span className="text-[9px] opacity-80">CONNECTED</span>
+              </div>
+
+              <div className="flex items-center justify-between px-3 py-1 bg-white/5 border border-white/10 text-slate-400 text-[9px] font-mono">
+                <span>SERVER STORAGE</span>
+                <span className="text-white font-bold">SYNCED</span>
+              </div>
             </div>
           </div>
 
           {/* Sidebar Menu Items */}
           <nav className="space-y-1">
             <p className="px-3 text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-500 mb-3">
-              MAIN NAVIGATION
+              NAVIGASI MENU
             </p>
             {navMenuItems.map((item) => (
               <button
@@ -369,9 +588,9 @@ export default function AdminPage() {
                   setActiveTab(item.id as any);
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-wider transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-wider transition-all rounded ${
                   activeTab === item.id
-                    ? 'bg-white text-black font-extrabold'
+                    ? 'bg-white text-black font-extrabold shadow-lg'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -381,7 +600,7 @@ export default function AdminPage() {
                 </div>
                 {item.badge !== null && (
                   <span
-                    className={`px-2 py-0.5 text-[10px] font-mono ${
+                    className={`px-2 py-0.5 text-[10px] font-mono rounded ${
                       activeTab === item.id ? 'bg-black text-white font-bold' : 'bg-white/10 text-slate-300'
                     }`}
                   >
@@ -395,29 +614,42 @@ export default function AdminPage() {
 
         {/* Sidebar Footer Controls */}
         <div className="space-y-2 border-t border-white/10 pt-4">
+          <button
+            onClick={async () => {
+              await refreshContent();
+              await fetchCloudinaryMedia();
+              showToast('✓ Data server & Cloudinary diperbarui');
+            }}
+            className="w-full flex items-center justify-between px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors rounded"
+          >
+            <span>REFRESH DATA</span>
+            {icons.refresh}
+          </button>
+
           <Link
             href="/"
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors rounded"
           >
             <span>WEBSITE UTAMA</span>
             {icons.external}
           </Link>
 
           <button
-            onClick={() => {
-              if (confirm('Apakah Anda yakin ingin mengembalikan semua data ke pengaturan awal?')) {
-                resetToDefault();
+            onClick={async () => {
+              if (confirm('Kembalikan semua data ke pengaturan awal (Cloudinary default)?')) {
+                await resetToDefault();
+                showToast('✓ Data berhasil direset ke default');
               }
             }}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 text-slate-400 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors text-left"
+            className="w-full flex items-center justify-between px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors text-left rounded"
           >
             <span>RESET DATA</span>
-            {icons.refresh}
+            <span className="text-[10px]">↺</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-white/5 hover:bg-white/20 border border-white/20 text-white text-xs font-mono uppercase tracking-wider transition-colors text-left font-bold"
+            className="w-full flex items-center justify-between px-4 py-2 bg-white/5 hover:bg-rose-900/40 border border-white/15 text-white text-xs font-mono uppercase tracking-wider transition-colors text-left font-bold rounded"
           >
             <span>KELUAR</span>
             <span className="text-[10px]">✕</span>
@@ -438,23 +670,29 @@ export default function AdminPage() {
         {/* Workspace Top Bar */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-8">
           <div>
-            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400 block mb-1">
-              CONTROL PANEL
-            </span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-slate-400">
+                PANEL KONTROL AKTIF
+              </span>
+              <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-mono font-bold uppercase rounded">
+                Server Persistent
+              </span>
+            </div>
             <h1 className="text-3xl sm:text-5xl font-black uppercase text-white tracking-tight">
-              {activeTab === 'overview' && 'OVERVIEW STATS'}
+              {activeTab === 'overview' && 'RINGKASAN STATISTIK'}
               {activeTab === 'members' && 'ANGGOTA TIM'}
               {activeTab === 'showcase' && 'KARYA PORTOFOLIO'}
+              {activeTab === 'media' && 'GALERI CLOUDINARY'}
               {activeTab === 'services' && 'DIVISI LAYANAN'}
               {activeTab === 'inquiries' && 'PESAN & BRIEF MASUK'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {activeTab === 'members' && (
               <button
                 onClick={() => openMemberModal()}
-                className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2"
+                className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2 rounded shadow-lg"
               >
                 <span>+</span>
                 <span>Tambah Anggota Tim</span>
@@ -463,11 +701,23 @@ export default function AdminPage() {
             {activeTab === 'showcase' && (
               <button
                 onClick={() => openShowcaseModal()}
-                className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2"
+                className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2 rounded shadow-lg"
               >
                 <span>+</span>
                 <span>Tambah Karya Showcase</span>
               </button>
+            )}
+            {activeTab === 'media' && (
+              <label className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2 rounded shadow-lg">
+                {icons.upload}
+                <span>Upload Foto ke Cloudinary</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUploadInput(e, 'media')}
+                />
+              </label>
             )}
           </div>
         </div>
@@ -475,88 +725,147 @@ export default function AdminPage() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-fadeIn">
+            {/* Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Card 1: Members */}
               <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-3 hover:border-white/30 transition-all">
                 <div className="flex items-center justify-between">
                   <div className="p-2 bg-white/5 rounded border border-white/10 text-white">
                     {icons.members}
                   </div>
-                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest">
+                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest rounded">
                     ACTIVE
                   </span>
                 </div>
                 <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold pt-2">TOTAL ANGGOTA</p>
                 <p className="text-4xl font-black text-white">{teamMembers.length}</p>
-                <p className="text-xs text-slate-400 font-light">Anggota aktif tampil di section #members</p>
+                <p className="text-xs text-slate-400 font-light">Tampil dengan avatar dari Cloudinary CDN</p>
               </div>
 
+              {/* Card 2: Showcase */}
               <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-3 hover:border-white/30 transition-all">
                 <div className="flex items-center justify-between">
                   <div className="p-2 bg-white/5 rounded border border-white/10 text-white">
                     {icons.showcase}
                   </div>
-                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest">
+                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest rounded">
                     FEATURED
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">KARYA PORTOFOLIO</p>
+                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold pt-2">KARYA PORTOFOLIO</p>
                 <p className="text-4xl font-black text-white">{showcaseItems.length}</p>
-                <p className="text-xs text-slate-400 font-light">Showcase 2x2 grid tampil di section #work</p>
+                <p className="text-xs text-slate-400 font-light">Grid showcase bersumber dari Cloudinary CDN</p>
               </div>
 
-              <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-3 hover:border-white/30 transition-all">
+              {/* Card 3: Cloudinary Media */}
+              <div className="bg-[#0a0a0d] border border-emerald-500/30 p-6 rounded-2xl space-y-3 hover:border-emerald-500/60 transition-all">
                 <div className="flex items-center justify-between">
-                  <div className="p-2 bg-white/5 rounded border border-white/10 text-white">
-                    {icons.services}
+                  <div className="p-2 bg-emerald-500/10 rounded border border-emerald-500/30 text-emerald-400">
+                    {icons.cloud}
                   </div>
-                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest">
-                    DIVISI
+                  <span className="text-[10px] font-mono bg-emerald-500/20 px-2 py-0.5 text-emerald-300 uppercase tracking-widest rounded font-bold">
+                    CLOUDINARY
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">DIVISI LAYANAN</p>
-                <p className="text-4xl font-black text-white">{services.length}</p>
-                <p className="text-xs text-slate-400 font-light">Tampil di section #divisi</p>
+                <p className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-widest font-bold pt-2">FOTO DI CLOUDINARY</p>
+                <p className="text-4xl font-black text-emerald-400">{cloudinaryMedia.length}</p>
+                <p className="text-xs text-slate-400 font-light">Total aset foto aktif di Cloudinary media storage</p>
               </div>
 
+              {/* Card 4: Inquiries */}
               <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-3 hover:border-white/30 transition-all">
                 <div className="flex items-center justify-between">
                   <div className="p-2 bg-white/5 rounded border border-white/10 text-white">
                     {icons.inquiries}
                   </div>
-                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest">
+                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest rounded">
                     INBOUND
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">PESAN BRIEF</p>
+                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold pt-2">PESAN &amp; BRIEF</p>
                 <p className="text-4xl font-black text-white">{inquiries.length}</p>
-                <p className="text-xs text-slate-400 font-light">Dikirim via formulir kontak website</p>
+                <p className="text-xs text-slate-400 font-light">Pesan nyata yang masuk dari pengunjung</p>
+              </div>
+            </div>
+
+            {/* Cloudinary Integration Status Card */}
+            <div className="bg-gradient-to-r from-[#0a0a0d] to-[#121218] border border-white/15 p-8 rounded-2xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400 block mb-1">
+                    STATUS INTEGRASI REAL
+                  </span>
+                  <h2 className="text-2xl font-black uppercase text-white tracking-tight">
+                    CLOUDINARY CDN &amp; SERVER PERSISTENCE AKTIF
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-2 max-w-2xl font-light leading-relaxed">
+                    Setiap perubahan data (anggota tim, showcase, dan layanan) langsung disimpan ke database server secara permanen. Foto diunggah langsung ke Cloudinary CDN sehingga dapat diakses cepat secara global.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => setActiveTab('media')}
+                    className="px-6 py-3.5 bg-emerald-500 text-black font-extrabold uppercase text-xs tracking-widest hover:bg-emerald-400 transition-colors rounded inline-flex items-center justify-center gap-2"
+                  >
+                    {icons.cloud}
+                    <span>Buka Galeri Cloudinary</span>
+                  </button>
+                  <label className="px-6 py-3.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-extrabold uppercase text-xs tracking-widest transition-all rounded inline-flex items-center justify-center gap-2 cursor-pointer">
+                    {icons.upload}
+                    <span>Upload Foto Cepat</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleUploadInput(e, 'media')}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
             {/* Quick Actions Card */}
             <div className="bg-[#0a0a0d] border border-white/15 p-8 rounded-2xl space-y-6">
               <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 block">
-                AKSI CEPAT
+                AKSI CEPAT PENGELOLAAN
               </span>
-              <h2 className="text-2xl font-black uppercase text-white tracking-tight">KONTROL KONTEN WEBSITE</h2>
-              <div className="flex flex-wrap gap-4">
+              <h3 className="text-xl font-black uppercase text-white tracking-tight">PILIH MENU UNTUK MENGELOLA KONTEN</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   onClick={() => {
                     setActiveTab('members');
                     openMemberModal();
                   }}
-                  className="px-6 py-4 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors"
+                  className="p-5 bg-white/5 border border-white/10 hover:border-white/30 text-left rounded-xl transition-all group"
                 >
-                  + Tambah Anggota Tim Baru
+                  <span className="text-xs font-mono font-extrabold uppercase text-white group-hover:text-amber-400 transition-colors block mb-1">
+                    + Tambah Anggota Tim
+                  </span>
+                  <p className="text-[11px] text-slate-400 font-light">Upload avatar ke Cloudinary &amp; edit profil</p>
                 </button>
+
                 <button
                   onClick={() => {
                     setActiveTab('showcase');
                     openShowcaseModal();
                   }}
-                  className="px-6 py-4 bg-white/10 border border-white/20 text-white font-extrabold uppercase text-xs tracking-widest hover:bg-white hover:text-black transition-all"
+                  className="p-5 bg-white/5 border border-white/10 hover:border-white/30 text-left rounded-xl transition-all group"
                 >
-                  + Tambah Karya Showcase Baru
+                  <span className="text-xs font-mono font-extrabold uppercase text-white group-hover:text-amber-400 transition-colors block mb-1">
+                    + Tambah Karya Showcase
+                  </span>
+                  <p className="text-[11px] text-slate-400 font-light">Upload foto konser/event ke Cloudinary</p>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('media')}
+                  className="p-5 bg-white/5 border border-white/10 hover:border-white/30 text-left rounded-xl transition-all group"
+                >
+                  <span className="text-xs font-mono font-extrabold uppercase text-emerald-400 block mb-1">
+                    Kelola Foto Cloudinary
+                  </span>
+                  <p className="text-[11px] text-slate-400 font-light">Lihat seluruh foto yang tersimpan di CDN</p>
                 </button>
               </div>
             </div>
@@ -567,61 +876,85 @@ export default function AdminPage() {
         {activeTab === 'members' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {teamMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/30 transition-all group"
-                >
-                  <div>
-                    <div className="relative w-full aspect-[4/5] overflow-hidden bg-white/5">
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0d] via-transparent to-transparent" />
-                    </div>
+              {teamMembers.map((member) => {
+                const isCloudinary = member.avatar.includes('res.cloudinary.com');
+                return (
+                  <div
+                    key={member.id}
+                    className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/30 transition-all group shadow-xl"
+                  >
+                    <div>
+                      <div className="relative w-full aspect-[4/5] overflow-hidden bg-white/5">
+                        <img
+                          src={member.avatar}
+                          alt={member.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0d] via-transparent to-transparent" />
 
-                    <div className="p-5 space-y-3">
-                      <div>
-                        <span className="text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider">
-                          {member.role}
-                        </span>
+                        {/* Cloudinary CDN Indicator badge */}
+                        <div className="absolute top-3 right-3">
+                          {isCloudinary ? (
+                            <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-md">
+                              Cloudinary
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-black/70 border border-white/20 text-slate-300 font-mono text-[9px] uppercase backdrop-blur-md">
+                              External
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <span className="inline-block px-2.5 py-1 rounded bg-black/80 backdrop-blur-md border border-white/15 text-[10px] font-extrabold text-slate-200 uppercase tracking-wider">
+                            {member.role}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-5 space-y-3">
                         <h3 className="text-xl font-black text-white tracking-tight">{member.name}</h3>
-                      </div>
 
-                      <div className="bg-white/5 p-3 rounded-lg border-l-2 border-slate-400 space-y-1">
-                        <p className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Motto Hidup</p>
-                        <p className="text-xs text-slate-200 italic font-light leading-relaxed">&ldquo;{member.motto}&rdquo;</p>
-                      </div>
+                        <div className="bg-white/5 p-3 rounded-lg border-l-2 border-slate-400 space-y-1">
+                          <p className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Motto</p>
+                          <p className="text-xs text-slate-200 italic font-light leading-relaxed">&ldquo;{member.motto}&rdquo;</p>
+                        </div>
 
-                      <p className="text-xs text-slate-400 font-light leading-relaxed">{member.bio}</p>
+                        <p className="text-xs text-slate-400 font-light leading-relaxed">{member.bio}</p>
+
+                        {member.highlights && (
+                          <div className="text-[10px] font-mono text-slate-400 font-bold uppercase">
+                            ★ {member.highlights}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-5 pt-0 flex items-center justify-between gap-2 border-t border-white/10 mt-4">
+                      <button
+                        onClick={() => openMemberModal(member)}
+                        className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
+                      >
+                        {icons.edit}
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Hapus ${member.name} dari anggota tim?`)) {
+                            await deleteTeamMember(member.id);
+                            showToast('✓ Anggota berhasil dihapus');
+                          }
+                        }}
+                        className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
+                      >
+                        {icons.delete}
+                        <span>Hapus</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="p-5 pt-0 flex items-center justify-between gap-2 border-t border-white/10 mt-4">
-                    <button
-                      onClick={() => openMemberModal(member)}
-                      className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5"
-                    >
-                      {icons.edit}
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Hapus ${member.name} dari anggota tim?`)) {
-                          deleteTeamMember(member.id);
-                        }
-                      }}
-                      className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5"
-                    >
-                      {icons.delete}
-                      <span>Hapus</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -630,56 +963,198 @@ export default function AdminPage() {
         {activeTab === 'showcase' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {showcaseItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/30 transition-all group"
-                >
-                  <div className="relative aspect-video overflow-hidden bg-black">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
-                    <span className="absolute bottom-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[10px] font-mono text-slate-300 uppercase tracking-widest">
-                      {item.category}
-                    </span>
-                  </div>
+              {showcaseItems.map((item) => {
+                const isCloudinary = item.image.includes('res.cloudinary.com');
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/30 transition-all group shadow-xl"
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-black">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
-                  <div className="p-6 space-y-2">
-                    <h3 className="text-2xl font-black uppercase text-white tracking-tight leading-tight">{item.title}</h3>
-                    <p className="text-xs text-slate-300 font-light">{item.subtitle}</p>
-                  </div>
+                      <span className="absolute bottom-3 left-3 px-3 py-1 bg-black/80 backdrop-blur-md rounded-full text-[10px] font-mono text-slate-300 uppercase tracking-widest border border-white/10">
+                        {item.category}
+                      </span>
 
-                  <div className="p-6 pt-0 flex items-center justify-end gap-3 border-t border-white/10 mt-auto">
-                    <button
-                      onClick={() => openShowcaseModal(item)}
-                      className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5"
-                    >
-                      {icons.edit}
-                      <span>Edit Karya</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Hapus karya "${item.title}"?`)) {
-                          deleteShowcaseItem(item.id);
-                        }
-                      }}
-                      className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5"
-                    >
-                      {icons.delete}
-                      <span>Hapus</span>
-                    </button>
+                      {/* Cloudinary CDN Indicator badge */}
+                      <div className="absolute top-3 right-3">
+                        {isCloudinary ? (
+                          <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-md">
+                            Cloudinary CDN
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded bg-black/70 border border-white/20 text-slate-300 font-mono text-[9px] uppercase backdrop-blur-md">
+                            Local / External
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-6 space-y-2">
+                      <h3 className="text-2xl font-black uppercase text-white tracking-tight leading-tight">{item.title}</h3>
+                      <p className="text-xs text-slate-300 font-light">{item.subtitle}</p>
+                    </div>
+
+                    <div className="p-6 pt-0 flex items-center justify-end gap-3 border-t border-white/10 mt-auto">
+                      <button
+                        onClick={() => openShowcaseModal(item)}
+                        className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
+                      >
+                        {icons.edit}
+                        <span>Edit Karya</span>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Hapus karya "${item.title}"?`)) {
+                            await deleteShowcaseItem(item.id);
+                            showToast('✓ Karya berhasil dihapus');
+                          }
+                        }}
+                        className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
+                      >
+                        {icons.delete}
+                        <span>Hapus</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* TAB 4: LAYANAN / SERVICES */}
+        {/* TAB 4: GALERI CLOUDINARY (MEDIA MANAGER) */}
+        {activeTab === 'media' && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Header Toolbar */}
+            <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-1 max-w-md">
+                <input
+                  type="text"
+                  placeholder="Cari foto di Cloudinary (nama/format)..."
+                  value={mediaSearchQuery}
+                  onChange={(e) => setMediaSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white rounded"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchCloudinaryMedia}
+                  disabled={isMediaLoading}
+                  className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white font-mono text-xs uppercase tracking-wider rounded transition-colors inline-flex items-center gap-2"
+                >
+                  <span className={isMediaLoading ? 'animate-spin' : ''}>↺</span>
+                  <span>Refresh Galeri</span>
+                </button>
+
+                <label className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase font-mono tracking-wider rounded transition-colors cursor-pointer inline-flex items-center gap-2">
+                  {icons.upload}
+                  <span>Upload Foto Baru</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleUploadInput(e, 'media')}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Media Grid */}
+            {isMediaLoading ? (
+              <div className="p-16 text-center bg-[#0a0a0d] border border-white/10 rounded-2xl font-mono text-xs text-slate-400">
+                <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mx-auto mb-3" />
+                <span>MEMUAT FOTO DARI CLOUDINARY...</span>
+              </div>
+            ) : filteredMedia.length === 0 ? (
+              <div className="p-16 text-center bg-[#0a0a0d] border border-white/10 rounded-2xl font-mono text-xs text-slate-400 space-y-3">
+                <p>Tidak ada foto yang cocok dengan pencarian.</p>
+                <label className="inline-block px-5 py-2.5 bg-white text-black font-extrabold text-xs uppercase cursor-pointer rounded">
+                  Upload Foto Sekarang
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleUploadInput(e, 'media')}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {filteredMedia.map((media) => {
+                  const isCopied = copiedUrl === media.secure_url;
+                  return (
+                    <div
+                      key={media.public_id}
+                      className="bg-[#0a0a0d] border border-white/10 rounded-xl overflow-hidden group hover:border-white/40 transition-all flex flex-col justify-between"
+                    >
+                      <div className="relative aspect-square bg-black overflow-hidden">
+                        <img
+                          src={media.secure_url}
+                          alt={media.public_id}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                          <div className="flex items-center justify-between">
+                            <span className="px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-mono text-white uppercase">
+                              {media.format}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteCloudinary(media.public_id)}
+                              className="p-1 rounded bg-rose-600/80 hover:bg-rose-600 text-white text-[10px]"
+                              title="Hapus dari Cloudinary"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => handleCopyUrl(media.secure_url)}
+                              className="w-full py-1.5 px-2 bg-white text-black font-mono text-[9px] font-bold uppercase rounded hover:bg-slate-200 transition-colors flex items-center justify-center gap-1"
+                            >
+                              {icons.copy}
+                              <span>{isCopied ? 'Tersalin!' : 'Salin URL'}</span>
+                            </button>
+                            <a
+                              href={media.secure_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-full py-1 px-2 bg-black/80 text-white font-mono text-[9px] uppercase rounded hover:bg-white/20 transition-colors text-center block"
+                            >
+                              Buka Asli ↗
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 space-y-1">
+                        <p className="text-[10px] font-mono text-white truncate" title={media.public_id}>
+                          {media.public_id.split('/').pop()}
+                        </p>
+                        <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
+                          <span>{media.width}x{media.height}</span>
+                          <span>{Math.round(media.bytes / 1024)} KB</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 5: LAYANAN / SERVICES */}
         {activeTab === 'services' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -695,7 +1170,7 @@ export default function AdminPage() {
                           type="text"
                           value={editingService.title}
                           onChange={(e) => setEditingService({ ...editingService, title: e.target.value })}
-                          className="w-full px-4 py-3 bg-black border border-white/20 text-white text-xs font-mono focus:outline-none focus:border-white"
+                          className="w-full px-4 py-3 bg-black border border-white/20 text-white text-xs font-mono focus:outline-none focus:border-white rounded"
                           required
                         />
                       </div>
@@ -707,21 +1182,21 @@ export default function AdminPage() {
                           rows={3}
                           value={editingService.desc}
                           onChange={(e) => setEditingService({ ...editingService, desc: e.target.value })}
-                          className="w-full px-4 py-3 bg-black border border-white/20 text-white text-xs font-mono focus:outline-none focus:border-white"
+                          className="w-full px-4 py-3 bg-black border border-white/20 text-white text-xs font-mono focus:outline-none focus:border-white rounded"
                           required
                         />
                       </div>
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className="px-4 py-2 bg-white text-black text-xs font-extrabold uppercase tracking-widest"
+                          className="px-4 py-2 bg-white text-black text-xs font-extrabold uppercase tracking-widest rounded"
                         >
                           Simpan Perubahan
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingService(null)}
-                          className="px-4 py-2 bg-white/10 text-slate-300 text-xs font-mono font-bold uppercase"
+                          className="px-4 py-2 bg-white/10 text-slate-300 text-xs font-mono font-bold uppercase rounded"
                         >
                           Batal
                         </button>
@@ -733,7 +1208,7 @@ export default function AdminPage() {
                         <span className="text-2xl font-mono font-black text-slate-400">{srv.id}</span>
                         <button
                           onClick={() => setEditingService(srv)}
-                          className="px-3 py-1 bg-white/10 hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase transition-all inline-flex items-center gap-1.5"
+                          className="px-3 py-1 bg-white/10 hover:bg-white hover:text-black text-white text-xs font-mono font-bold uppercase transition-all inline-flex items-center gap-1.5 rounded"
                         >
                           {icons.edit}
                           <span>Edit</span>
@@ -749,7 +1224,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* TAB 5: PESAN MASUK (INQUIRIES) */}
+        {/* TAB 6: PESAN MASUK (INQUIRIES) */}
         {activeTab === 'inquiries' && (
           <div className="space-y-6 animate-fadeIn">
             {inquiries.length === 0 ? (
@@ -759,17 +1234,22 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-4">
                 {inquiries.map((inq) => (
-                  <div key={inq.id} className="bg-[#0a0a0d] border border-white/10 rounded-2xl p-6 space-y-4">
+                  <div key={inq.id} className="bg-[#0a0a0d] border border-white/10 rounded-2xl p-6 space-y-4 shadow-lg">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                       <div>
                         <h3 className="text-lg font-extrabold uppercase text-white">{inq.name}</h3>
-                        <span className="text-xs font-mono text-slate-400">{inq.service}</span>
+                        <span className="text-xs font-mono text-emerald-400">{inq.service}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-mono text-slate-400">{inq.createdAt}</span>
                         <button
-                          onClick={() => deleteInquiry(inq.id)}
-                          className="px-3 py-1 bg-white/10 hover:bg-rose-600 hover:text-white text-slate-300 text-xs font-mono font-bold uppercase transition-colors inline-flex items-center gap-1.5"
+                          onClick={async () => {
+                            if (confirm(`Hapus pesan dari ${inq.name}?`)) {
+                              await deleteInquiry(inq.id);
+                              showToast('✓ Pesan berhasil dihapus');
+                            }
+                          }}
+                          className="px-3 py-1 bg-white/10 hover:bg-rose-600 hover:text-white text-slate-300 text-xs font-mono font-bold uppercase transition-colors inline-flex items-center gap-1.5 rounded"
                         >
                           {icons.delete}
                           <span>Hapus Pesan</span>
@@ -777,13 +1257,14 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono text-slate-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono text-slate-300">
                       <div><strong className="text-white">Email:</strong> {inq.email}</div>
-                      <div><strong className="text-white">Telepon / WA:</strong> {inq.phone || '-'}</div>
+                      <div><strong className="text-white">Telepon/WA:</strong> {inq.phone || '-'}</div>
+                      <div><strong className="text-white">Tanggal Event:</strong> {inq.eventDate || '-'}</div>
                     </div>
 
                     <div className="bg-white/5 p-4 rounded-xl text-xs text-slate-200 font-light leading-relaxed">
-                      <strong className="block font-mono text-white text-[10px] uppercase mb-1">Rincian Brief / Pesan:</strong>
+                      <strong className="block font-mono text-white text-[10px] uppercase mb-1">Rincian Brief:</strong>
                       {inq.message}
                     </div>
                   </div>
@@ -797,11 +1278,16 @@ export default function AdminPage() {
       {/* MODAL: TAMBAH / EDIT MEMBER */}
       {isMemberModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-8 space-y-6 overflow-y-auto max-h-[90vh]">
+          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-8 space-y-6 overflow-y-auto max-h-[90vh] shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-xl font-black uppercase text-white tracking-tight">
-                {editingMember ? 'Edit Anggota Tim' : 'Tambah Anggota Tim Baru'}
-              </h3>
+              <div>
+                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+                  TIM KREATIF &bull; CLOUDINARY
+                </span>
+                <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                  {editingMember ? 'Edit Anggota Tim' : 'Tambah Anggota Tim Baru'}
+                </h3>
+              </div>
               <button
                 onClick={() => setIsMemberModalOpen(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -819,7 +1305,7 @@ export default function AdminPage() {
                   value={memberForm.name}
                   onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
                   placeholder="Contoh: M. Rifaldi"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
@@ -831,50 +1317,72 @@ export default function AdminPage() {
                   value={memberForm.role}
                   onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
                   placeholder="Contoh: Head of Event Documentation & Director"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 font-mono font-bold uppercase mb-2 text-[10px]">Foto Profil / Avatar *</label>
-                
-                {/* Image Upload Box & Live Preview */}
-                <div className="flex items-center gap-4 mb-3">
+              {/* Foto Profil / Cloudinary Upload */}
+              <div className="space-y-2 p-4 bg-white/5 border border-white/10 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-300 font-mono font-bold uppercase text-[10px]">
+                    Foto Profil / Avatar (Cloudinary) *
+                  </label>
+                  {memberForm.avatar.includes('res.cloudinary.com') && (
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold uppercase rounded">
+                      Cloudinary CDN
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
                   {memberForm.avatar ? (
-                    <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/20 shrink-0 bg-white/5 relative">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden border border-white/20 shrink-0 bg-black relative">
                       <img src={memberForm.avatar} alt="Preview" className="w-full h-full object-cover object-top" />
                     </div>
                   ) : (
-                    <div className="w-16 h-16 rounded-xl border border-dashed border-white/20 flex items-center justify-center shrink-0 bg-white/5 text-slate-500 font-mono text-[10px]">
-                      No Image
+                    <div className="w-20 h-20 rounded-xl border border-dashed border-white/20 flex items-center justify-center shrink-0 bg-white/5 text-slate-500 font-mono text-[10px]">
+                      No Avatar
                     </div>
                   )}
-                  <div className="flex-1 space-y-1.5">
-                    <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 rounded text-xs font-mono font-bold text-white uppercase cursor-pointer transition-all">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                      <span>Upload Foto dari Komputer</span>
+
+                  <div className="flex-1 space-y-2">
+                    {/* Direct Upload Button */}
+                    <label className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-black hover:bg-slate-200 rounded text-xs font-mono font-bold uppercase cursor-pointer transition-all shadow">
+                      {icons.upload}
+                      <span>Upload Baru ke Cloudinary</span>
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => handleFileUpload(e, (url) => setMemberForm({ ...memberForm, avatar: url }))}
+                        onChange={(e) =>
+                          handleUploadInput(e, 'member', (url) =>
+                            setMemberForm((prev) => ({ ...prev, avatar: url }))
+                          )
+                        }
                       />
                     </label>
-                    <p className="text-[9px] text-slate-400 font-mono">Format: JPG, PNG, WEBP, GIF</p>
+
+                    {/* Choose from Cloudinary button */}
+                    <button
+                      type="button"
+                      onClick={() => openCloudinaryPicker('member')}
+                      className="w-full py-2 px-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-[10px] font-mono font-bold uppercase text-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      {icons.cloud}
+                      <span>Pilih dari Galeri Cloudinary</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <span className="text-[9px] font-mono text-slate-400 uppercase">Atau masukkan URL/Data Image:</span>
+                <div className="space-y-1 pt-1">
+                  <span className="text-[9px] font-mono text-slate-400 uppercase">URL Gambar:</span>
                   <input
                     type="text"
                     required
                     value={memberForm.avatar}
                     onChange={(e) => setMemberForm({ ...memberForm, avatar: e.target.value })}
-                    placeholder="https://... atau data:image/..."
-                    className="w-full px-4 py-2.5 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white"
+                    placeholder="https://res.cloudinary.com/..."
+                    className="w-full px-3 py-2 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white rounded"
                   />
                 </div>
               </div>
@@ -887,7 +1395,7 @@ export default function AdminPage() {
                   value={memberForm.motto}
                   onChange={(e) => setMemberForm({ ...memberForm, motto: e.target.value })}
                   placeholder="Contoh: Abadikan emosi murni di setiap detik karya."
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
@@ -898,7 +1406,7 @@ export default function AdminPage() {
                   value={memberForm.bio}
                   onChange={(e) => setMemberForm({ ...memberForm, bio: e.target.value })}
                   placeholder="Pengalaman & latar belakang..."
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
@@ -909,21 +1417,21 @@ export default function AdminPage() {
                   value={memberForm.highlights}
                   onChange={(e) => setMemberForm({ ...memberForm, highlights: e.target.value })}
                   placeholder="Contoh: 150+ Major Events Covered"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
               <div className="flex gap-3 pt-4 border-t border-white/10">
                 <button
                   type="submit"
-                  className="flex-1 py-4 bg-white text-black font-extrabold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors cursor-pointer"
+                  className="flex-1 py-4 bg-white text-black font-extrabold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors cursor-pointer rounded"
                 >
-                  Simpan Anggota →
+                  Simpan Anggota &rarr;
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsMemberModalOpen(false)}
-                  className="px-6 py-4 bg-white/10 text-white font-mono font-bold uppercase text-xs cursor-pointer"
+                  className="px-6 py-4 bg-white/10 text-white font-mono font-bold uppercase text-xs cursor-pointer rounded"
                 >
                   Batal
                 </button>
@@ -936,11 +1444,16 @@ export default function AdminPage() {
       {/* MODAL: TAMBAH / EDIT SHOWCASE */}
       {isShowcaseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-8 space-y-6 overflow-y-auto max-h-[90vh]">
+          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-8 space-y-6 overflow-y-auto max-h-[90vh] shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-xl font-black uppercase text-white tracking-tight">
-                {editingShowcase ? 'Edit Karya Portofolio' : 'Tambah Karya Portofolio Baru'}
-              </h3>
+              <div>
+                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+                  PORTOFOLIO SHOWCASE &bull; CLOUDINARY
+                </span>
+                <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                  {editingShowcase ? 'Edit Karya Portofolio' : 'Tambah Karya Portofolio Baru'}
+                </h3>
+              </div>
               <button
                 onClick={() => setIsShowcaseModalOpen(false)}
                 className="text-slate-400 hover:text-white text-lg font-bold"
@@ -958,7 +1471,7 @@ export default function AdminPage() {
                   value={showcaseForm.title}
                   onChange={(e) => setShowcaseForm({ ...showcaseForm, title: e.target.value })}
                   placeholder="Contoh: Concert Festival Live Stage"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
@@ -970,7 +1483,7 @@ export default function AdminPage() {
                   value={showcaseForm.subtitle}
                   onChange={(e) => setShowcaseForm({ ...showcaseForm, subtitle: e.target.value })}
                   placeholder="Contoh: Global Live Concert Series"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
@@ -982,48 +1495,68 @@ export default function AdminPage() {
                   value={showcaseForm.category}
                   onChange={(e) => setShowcaseForm({ ...showcaseForm, category: e.target.value })}
                   placeholder="Contoh: Festival Film / Arena Tour"
-                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-400 font-mono font-bold uppercase mb-2 text-[10px]">Gambar / Thumbnail Karya *</label>
-                
-                {/* Live Preview Box & File Upload Button */}
-                <div className="space-y-3 mb-3">
-                  {showcaseForm.image ? (
-                    <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/20 shrink-0 bg-white/5 relative">
-                      <img src={showcaseForm.image} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-full aspect-video rounded-xl border border-dashed border-white/20 flex items-center justify-center shrink-0 bg-white/5 text-slate-500 font-mono text-[10px]">
-                      No Thumbnail Image
-                    </div>
+              {/* Showcase Image Upload with Cloudinary */}
+              <div className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-300 font-mono font-bold uppercase text-[10px]">
+                    Foto Thumbnail Karya (Cloudinary) *
+                  </label>
+                  {showcaseForm.image.includes('res.cloudinary.com') && (
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold uppercase rounded">
+                      Cloudinary CDN
+                    </span>
                   )}
+                </div>
 
-                  <label className="flex items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 rounded text-xs font-mono font-bold text-white uppercase cursor-pointer transition-all">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    <span>Upload Foto Karya dari Perangkat</span>
+                {showcaseForm.image ? (
+                  <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/20 shrink-0 bg-black relative">
+                    <img src={showcaseForm.image} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full aspect-video rounded-xl border border-dashed border-white/20 flex items-center justify-center shrink-0 bg-white/5 text-slate-500 font-mono text-[10px]">
+                    No Thumbnail Image
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-black hover:bg-slate-200 rounded text-xs font-mono font-bold uppercase cursor-pointer transition-all shadow">
+                    {icons.upload}
+                    <span>Upload ke Cloudinary</span>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e, (url) => setShowcaseForm({ ...showcaseForm, image: url }))}
+                      onChange={(e) =>
+                        handleUploadInput(e, 'showcase', (url) =>
+                          setShowcaseForm((prev) => ({ ...prev, image: url }))
+                        )
+                      }
                     />
                   </label>
+
+                  <button
+                    type="button"
+                    onClick={() => openCloudinaryPicker('showcase')}
+                    className="py-3 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-xs font-mono font-bold uppercase text-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {icons.cloud}
+                    <span>Pilih dari Galeri</span>
+                  </button>
                 </div>
 
-                <div className="space-y-1">
-                  <span className="text-[9px] font-mono text-slate-400 uppercase">Atau masukkan URL/Path Foto:</span>
+                <div className="space-y-1 pt-1">
+                  <span className="text-[9px] font-mono text-slate-400 uppercase">URL / Path Foto:</span>
                   <input
                     type="text"
                     required
                     value={showcaseForm.image}
                     onChange={(e) => setShowcaseForm({ ...showcaseForm, image: e.target.value })}
-                    placeholder="/images/DSC03485.jpg atau https://..."
-                    className="w-full px-4 py-2.5 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white"
+                    placeholder="https://res.cloudinary.com/..."
+                    className="w-full px-3 py-2 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white rounded"
                   />
                 </div>
               </div>
@@ -1031,19 +1564,99 @@ export default function AdminPage() {
               <div className="flex gap-3 pt-4 border-t border-white/10">
                 <button
                   type="submit"
-                  className="flex-1 py-4 bg-white text-black font-extrabold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors cursor-pointer"
+                  className="flex-1 py-4 bg-white text-black font-extrabold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors cursor-pointer rounded"
                 >
-                  Simpan Karya →
+                  Simpan Karya &rarr;
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsShowcaseModalOpen(false)}
-                  className="px-6 py-4 bg-white/10 text-white font-mono font-bold uppercase text-xs cursor-pointer"
+                  className="px-6 py-4 bg-white/10 text-white font-mono font-bold uppercase text-xs cursor-pointer rounded"
                 >
                   Batal
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CLOUDINARY MEDIA PICKER */}
+      {isPickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-6">
+          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-4xl p-6 sm:p-8 space-y-6 overflow-y-auto max-h-[90vh] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+                  PILIH DARI CLOUDINARY
+                </span>
+                <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                  Pilih Foto untuk {pickerTarget === 'member' ? 'Anggota Tim' : 'Karya Showcase'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsPickerOpen(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Quick Upload from Picker */}
+            <div className="flex items-center justify-between gap-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+              <span className="text-xs font-mono text-slate-300">Foto belum ada di galeri?</span>
+              <label className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs font-mono uppercase tracking-wider rounded cursor-pointer inline-flex items-center gap-1.5 transition-colors">
+                {icons.upload}
+                <span>Upload Foto Sekarang</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleUploadInput(e, pickerTarget || 'media', (url) => handleSelectFromPicker(url))
+                  }
+                />
+              </label>
+            </div>
+
+            {/* Grid of Cloudinary Photos */}
+            {cloudinaryMedia.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 font-mono text-xs">
+                Belum ada foto di Cloudinary. Silakan upload terlebih dahulu.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[50vh] overflow-y-auto pr-2">
+                {cloudinaryMedia.map((m) => (
+                  <div
+                    key={m.public_id}
+                    onClick={() => handleSelectFromPicker(m.secure_url)}
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-white/10 hover:border-emerald-400 cursor-pointer transition-all bg-black"
+                  >
+                    <img
+                      src={m.secure_url}
+                      alt={m.public_id}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="px-3 py-1.5 bg-black text-white font-mono text-[10px] font-bold uppercase rounded shadow-lg">
+                        Gunakan Foto Ini
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-white/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsPickerOpen(false)}
+                className="px-6 py-2.5 bg-white/10 text-white font-mono text-xs uppercase font-bold rounded"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

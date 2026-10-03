@@ -14,17 +14,17 @@ export default function Hero({ onOpenReel }: HeroProps) {
     {
       title: "CRAFTING UNFORGETTABLE EXPERIENCES",
       category: "Premier Visual Storytelling & Production Studio",
-      image: "/images/DSC03485.jpg",
+      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg",
     },
     {
       title: "ELEVATE YOUR VISUAL IDENTITY",
       category: "World-Class Cinematography & Media Excellence",
-      image: "/images/DSC03481.jpg",
+      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg",
     },
     {
       title: "WHERE PASSION MEETS PRECISION",
       category: "End-to-End Creative Film & Media Production",
-      image: "/images/DSC02194.jpg",
+      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg",
     },
   ];
 
