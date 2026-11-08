@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import { useContent, HeroSlide } from '@/context/ContentContext';
 
 interface HeroProps {
   onOpenReel: () => void;
@@ -9,24 +10,30 @@ interface HeroProps {
 
 const SLIDE_DURATION = 5500; // 5.5 seconds per slide
 
+const FALLBACK_SLIDES: HeroSlide[] = [
+  {
+    id: "hero-1",
+    title: "CRAFTING UNFORGETTABLE EXPERIENCES",
+    category: "Premier Visual Storytelling & Production Studio",
+    image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg",
+  },
+  {
+    id: "hero-2",
+    title: "ELEVATE YOUR VISUAL IDENTITY",
+    category: "World-Class Cinematography & Media Excellence",
+    image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg",
+  },
+  {
+    id: "hero-3",
+    title: "WHERE PASSION MEETS PRECISION",
+    category: "End-to-End Creative Film & Media Production",
+    image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg",
+  },
+];
+
 export default function Hero({ onOpenReel }: HeroProps) {
-  const slides = [
-    {
-      title: "CRAFTING UNFORGETTABLE EXPERIENCES",
-      category: "Premier Visual Storytelling & Production Studio",
-      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg",
-    },
-    {
-      title: "ELEVATE YOUR VISUAL IDENTITY",
-      category: "World-Class Cinematography & Media Excellence",
-      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg",
-    },
-    {
-      title: "WHERE PASSION MEETS PRECISION",
-      category: "End-to-End Creative Film & Media Production",
-      image: "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg",
-    },
-  ];
+  const { heroSlides } = useContent();
+  const slides = heroSlides && heroSlides.length > 0 ? heroSlides : FALLBACK_SLIDES;
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -76,7 +83,7 @@ export default function Hero({ onOpenReel }: HeroProps) {
       <div className="absolute inset-0 z-0">
         {slides.map((slide, idx) => (
           <div
-            key={slide.image}
+            key={`${slide.id || idx}-${slide.image}`}
             className={`absolute inset-0 transition-all duration-1000 ease-out ${
               currentSlide === idx
                 ? 'opacity-100 scale-105 z-10'

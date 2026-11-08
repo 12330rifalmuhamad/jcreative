@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useContent, TeamMember, ShowcaseItem, ServiceItem, Inquiry } from '@/context/ContentContext';
+import { useContent, TeamMember, ShowcaseItem, HeroSlide, ServiceItem, Inquiry } from '@/context/ContentContext';
 
 interface CloudinaryMediaItem {
   public_id: string;
@@ -28,12 +28,13 @@ export default function AdminPage() {
 
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'showcase' | 'services' | 'inquiries' | 'media'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'hero' | 'showcase' | 'members' | 'media' | 'services' | 'inquiries'>('overview');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const {
     teamMembers,
     showcaseItems,
+    heroSlides,
     services,
     inquiries,
     isLoading: isContentLoading,
@@ -41,9 +42,15 @@ export default function AdminPage() {
     addTeamMember,
     updateTeamMember,
     deleteTeamMember,
+    changeTeamMemberAvatar,
     addShowcaseItem,
     updateShowcaseItem,
     deleteShowcaseItem,
+    changeShowcaseItemImage,
+    addHeroSlide,
+    updateHeroSlide,
+    deleteHeroSlide,
+    changeHeroSlideImage,
     updateService,
     deleteInquiry,
     resetToDefault,
@@ -59,13 +66,22 @@ export default function AdminPage() {
   const [uploadStatus, setUploadStatus] = useState<{
     isUploading: boolean;
     message: string;
-    target: 'member' | 'showcase' | 'media' | null;
+    target: 'member' | 'showcase' | 'hero' | 'media' | null;
   }>({
     isUploading: false,
     message: '',
     target: null,
   });
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Quick Apply Modal for uploaded images
+  const [quickApplyModal, setQuickApplyModal] = useState<{
+    isOpen: boolean;
+    url: string;
+  }>({ isOpen: false, url: '' });
+  const [quickApplyCategory, setQuickApplyCategory] = useState<'hero' | 'showcase' | 'member'>('hero');
+  const [quickApplyTargetId, setQuickApplyTargetId] = useState<string>('');
 
   // Modals state
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -74,11 +90,14 @@ export default function AdminPage() {
   const [isShowcaseModalOpen, setIsShowcaseModalOpen] = useState(false);
   const [editingShowcase, setEditingShowcase] = useState<ShowcaseItem | null>(null);
 
+  const [isHeroModalOpen, setIsHeroModalOpen] = useState(false);
+  const [editingHero, setEditingHero] = useState<HeroSlide | null>(null);
+
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
 
   // Cloudinary Picker Modal state
   const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<'member' | 'showcase' | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<'member' | 'showcase' | 'hero' | null>(null);
 
   // Form fields for Member
   const [memberForm, setMemberForm] = useState({
@@ -96,6 +115,13 @@ export default function AdminPage() {
     subtitle: '',
     image: '',
     category: '',
+  });
+
+  // Form fields for Hero Slide
+  const [heroForm, setHeroForm] = useState({
+    title: '',
+    category: '',
+    image: '',
   });
 
   const showToast = (msg: string) => {
@@ -168,28 +194,32 @@ export default function AdminPage() {
   // Handle direct file input upload
   const handleUploadInput = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    target: 'member' | 'showcase' | 'media',
-    onSuccess?: (url: string) => void
+    target: 'member' | 'showcase' | 'hero' | 'media',
+    onSuccess?: (url: string) => void | Promise<void>
   ) => {
     const file = e.target.files?.[0];
+    const inputEl = e.target;
     if (!file) return;
 
-    const folderMap = {
+    const folderMap: Record<string, string> = {
       member: 'jcreative/team',
       showcase: 'jcreative/showcase',
+      hero: 'jcreative/hero',
       media: 'jcreative/gallery',
     };
 
     setUploadStatus({
       isUploading: true,
       message: `Mengunggah ${file.name} ke Cloudinary CDN...`,
-      target,
+      target: target === 'media' ? null : target,
     });
 
     try {
-      const secureUrl = await uploadFileToCloudinary(file, folderMap[target]);
+      const secureUrl = await uploadFileToCloudinary(file, folderMap[target] || 'jcreative');
       if (onSuccess) {
-        onSuccess(secureUrl);
+        await onSuccess(secureUrl);
+      } else {
+        setQuickApplyModal({ isOpen: true, url: secureUrl });
       }
       showToast(`✓ Foto berhasil diunggah ke Cloudinary!`);
     } catch (err: any) {
@@ -201,8 +231,8 @@ export default function AdminPage() {
         message: '',
         target: null,
       });
-      // reset file input
-      e.target.value = '';
+      // reset file input safely
+      if (inputEl) inputEl.value = '';
     }
   };
 
@@ -264,14 +294,27 @@ export default function AdminPage() {
 
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingMember) {
-      await updateTeamMember(editingMember.id, memberForm);
-      showToast('✓ Data anggota tim berhasil diperbarui');
-    } else {
-      await addTeamMember(memberForm);
-      showToast('✓ Anggota tim baru berhasil ditambahkan');
+    try {
+      if (editingMember) {
+        const ok = await updateTeamMember(editingMember.id, memberForm);
+        if (ok) {
+          showToast('✓ Data anggota tim berhasil diperbarui & tersimpan!');
+        } else {
+          alert('Gagal menyimpan pembaruan anggota ke server.');
+        }
+      } else {
+        const ok = await addTeamMember(memberForm);
+        if (ok) {
+          showToast('✓ Anggota tim baru berhasil ditambahkan & tersimpan!');
+        } else {
+          alert('Gagal menambahkan anggota ke server.');
+        }
+      }
+      setIsMemberModalOpen(false);
+      await refreshContent();
+    } catch (err: any) {
+      alert(`Gagal menyimpan: ${err?.message || 'Terjadi kesalahan'}`);
     }
-    setIsMemberModalOpen(false);
   };
 
   // Open showcase modal (Create or Edit)
@@ -298,14 +341,82 @@ export default function AdminPage() {
 
   const handleSaveShowcase = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingShowcase) {
-      await updateShowcaseItem(editingShowcase.id, showcaseForm);
-      showToast('✓ Karya portofolio berhasil diperbarui');
-    } else {
-      await addShowcaseItem(showcaseForm);
-      showToast('✓ Karya portofolio baru berhasil ditambahkan');
+    try {
+      if (editingShowcase) {
+        const ok = await updateShowcaseItem(editingShowcase.id, showcaseForm);
+        if (ok) {
+          showToast('✓ Karya portofolio berhasil diperbarui & tersimpan!');
+        } else {
+          alert('Gagal menyimpan pembaruan karya ke server.');
+        }
+      } else {
+        const ok = await addShowcaseItem(showcaseForm);
+        if (ok) {
+          showToast('✓ Karya portofolio baru berhasil ditambahkan & tersimpan!');
+        } else {
+          alert('Gagal menambahkan karya ke server.');
+        }
+      }
+      setIsShowcaseModalOpen(false);
+      await refreshContent();
+    } catch (err: any) {
+      alert(`Gagal menyimpan karya: ${err?.message || 'Terjadi kesalahan'}`);
     }
-    setIsShowcaseModalOpen(false);
+  };
+
+  // Open hero slide modal (Create or Edit)
+  const openHeroModal = (slide?: HeroSlide) => {
+    if (slide) {
+      setEditingHero(slide);
+      setHeroForm({
+        title: slide.title,
+        category: slide.category,
+        image: slide.image,
+      });
+    } else {
+      setEditingHero(null);
+      setHeroForm({
+        title: '',
+        category: 'Premier Visual Storytelling & Production Studio',
+        image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
+      });
+    }
+    setIsHeroModalOpen(true);
+  };
+
+  const handleSaveHero = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingHero) {
+        const ok = await updateHeroSlide(editingHero.id, heroForm);
+        if (ok) {
+          showToast('✓ Slide Hero berhasil diperbarui & tersimpan!');
+        } else {
+          alert('Gagal menyimpan pembaruan slide hero ke server.');
+        }
+      } else {
+        const ok = await addHeroSlide(heroForm);
+        if (ok) {
+          showToast('✓ Slide Hero baru berhasil ditambahkan & tersimpan!');
+        } else {
+          alert('Gagal menambahkan slide hero ke server.');
+        }
+      }
+      setIsHeroModalOpen(false);
+      await refreshContent();
+    } catch (err: any) {
+      alert(`Gagal menyimpan slide hero: ${err?.message || 'Terjadi kesalahan'}`);
+    }
+  };
+
+  const handleDeleteHero = async (id: string) => {
+    if (heroSlides.length <= 1) {
+      alert('Minimal harus ada 1 slide hero di halaman utama.');
+      return;
+    }
+    if (!confirm('Hapus slide hero ini dari halaman utama?')) return;
+    await deleteHeroSlide(id);
+    showToast('✓ Slide hero berhasil dihapus');
   };
 
   // Save edited service
@@ -322,7 +433,7 @@ export default function AdminPage() {
   };
 
   // Open picker modal
-  const openCloudinaryPicker = (target: 'member' | 'showcase') => {
+  const openCloudinaryPicker = (target: 'member' | 'showcase' | 'hero') => {
     setPickerTarget(target);
     setIsPickerOpen(true);
   };
@@ -332,6 +443,8 @@ export default function AdminPage() {
       setMemberForm((prev) => ({ ...prev, avatar: url }));
     } else if (pickerTarget === 'showcase') {
       setShowcaseForm((prev) => ({ ...prev, image: url }));
+    } else if (pickerTarget === 'hero') {
+      setHeroForm((prev) => ({ ...prev, image: url }));
     }
     setIsPickerOpen(false);
     showToast('✓ Foto Cloudinary terpilih!');
@@ -492,8 +605,9 @@ export default function AdminPage() {
 
   const navMenuItems = [
     { id: 'overview', label: 'OVERVIEW STATS', icon: icons.overview, badge: null },
-    { id: 'members', label: 'ANGGOTA TIM', icon: icons.members, badge: teamMembers.length },
+    { id: 'hero', label: 'SLIDER HERO', icon: icons.showcase, badge: heroSlides.length },
     { id: 'showcase', label: 'KARYA PORTOFOLIO', icon: icons.showcase, badge: showcaseItems.length },
+    { id: 'members', label: 'ANGGOTA TIM', icon: icons.members, badge: teamMembers.length },
     { id: 'media', label: 'GALERI CLOUDINARY', icon: icons.media, badge: cloudinaryMedia.length },
     { id: 'services', label: 'DIVISI LAYANAN', icon: icons.services, badge: services.length },
     { id: 'inquiries', label: 'PESAN BRIEF', icon: icons.inquiries, badge: inquiries.length },
@@ -680,8 +794,9 @@ export default function AdminPage() {
             </div>
             <h1 className="text-3xl sm:text-5xl font-black uppercase text-white tracking-tight">
               {activeTab === 'overview' && 'RINGKASAN STATISTIK'}
-              {activeTab === 'members' && 'ANGGOTA TIM'}
+              {activeTab === 'hero' && 'SLIDER HERO UTAMA'}
               {activeTab === 'showcase' && 'KARYA PORTOFOLIO'}
+              {activeTab === 'members' && 'ANGGOTA TIM'}
               {activeTab === 'media' && 'GALERI CLOUDINARY'}
               {activeTab === 'services' && 'DIVISI LAYANAN'}
               {activeTab === 'inquiries' && 'PESAN & BRIEF MASUK'}
@@ -689,6 +804,26 @@ export default function AdminPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-3 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-mono text-xs font-bold uppercase tracking-wider rounded transition-all inline-flex items-center gap-2"
+              title="Buka website di tab baru untuk melihat perubahan langsung"
+            >
+              <span>Lihat Website</span>
+              <span>↗</span>
+            </Link>
+
+            {activeTab === 'hero' && (
+              <button
+                onClick={() => openHeroModal()}
+                className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2 rounded shadow-lg"
+              >
+                <span>+</span>
+                <span>Tambah Slide Hero</span>
+              </button>
+            )}
             {activeTab === 'members' && (
               <button
                 onClick={() => openMemberModal()}
@@ -757,19 +892,19 @@ export default function AdminPage() {
                 <p className="text-xs text-slate-400 font-light">Grid showcase bersumber dari Cloudinary CDN</p>
               </div>
 
-              {/* Card 3: Cloudinary Media */}
-              <div className="bg-[#0a0a0d] border border-emerald-500/30 p-6 rounded-2xl space-y-3 hover:border-emerald-500/60 transition-all">
+              {/* Card 3: Slider Hero */}
+              <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-3 hover:border-white/30 transition-all">
                 <div className="flex items-center justify-between">
-                  <div className="p-2 bg-emerald-500/10 rounded border border-emerald-500/30 text-emerald-400">
-                    {icons.cloud}
+                  <div className="p-2 bg-white/5 rounded border border-white/10 text-white">
+                    {icons.showcase}
                   </div>
-                  <span className="text-[10px] font-mono bg-emerald-500/20 px-2 py-0.5 text-emerald-300 uppercase tracking-widest rounded font-bold">
-                    CLOUDINARY
+                  <span className="text-[10px] font-mono bg-white/10 px-2 py-0.5 text-slate-300 uppercase tracking-widest rounded">
+                    HERO
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-widest font-bold pt-2">FOTO DI CLOUDINARY</p>
-                <p className="text-4xl font-black text-emerald-400">{cloudinaryMedia.length}</p>
-                <p className="text-xs text-slate-400 font-light">Total aset foto aktif di Cloudinary media storage</p>
+                <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold pt-2">SLIDER HERO</p>
+                <p className="text-4xl font-black text-white">{heroSlides.length}</p>
+                <p className="text-xs text-slate-400 font-light">Slide foto utama dengan visual Cloudinary CDN</p>
               </div>
 
               {/* Card 4: Inquiries */}
@@ -799,28 +934,29 @@ export default function AdminPage() {
                     CLOUDINARY CDN &amp; SERVER PERSISTENCE AKTIF
                   </h2>
                   <p className="text-xs text-slate-300 mt-2 max-w-2xl font-light leading-relaxed">
-                    Setiap perubahan data (anggota tim, showcase, dan layanan) langsung disimpan ke database server secara permanen. Foto diunggah langsung ke Cloudinary CDN sehingga dapat diakses cepat secara global.
+                    Setiap perubahan data (slider hero, portofolio, anggota tim, dan layanan) langsung disimpan ke database server secara permanen. Foto diunggah langsung ke Cloudinary CDN saat pembuatan maupun pengeditan data.
                   </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={() => setActiveTab('media')}
-                    className="px-6 py-3.5 bg-emerald-500 text-black font-extrabold uppercase text-xs tracking-widest hover:bg-emerald-400 transition-colors rounded inline-flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setActiveTab('hero');
+                      openHeroModal();
+                    }}
+                    className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors rounded inline-flex items-center justify-center gap-2"
                   >
-                    {icons.cloud}
-                    <span>Buka Galeri Cloudinary</span>
+                    <span>+ Slide Hero Baru</span>
                   </button>
-                  <label className="px-6 py-3.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-extrabold uppercase text-xs tracking-widest transition-all rounded inline-flex items-center justify-center gap-2 cursor-pointer">
-                    {icons.upload}
-                    <span>Upload Foto Cepat</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleUploadInput(e, 'media')}
-                    />
-                  </label>
+                  <button
+                    onClick={() => {
+                      setActiveTab('showcase');
+                      openShowcaseModal();
+                    }}
+                    className="px-6 py-3.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-extrabold uppercase text-xs tracking-widest transition-all rounded inline-flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>+ Karya Showcase</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -834,15 +970,15 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   onClick={() => {
-                    setActiveTab('members');
-                    openMemberModal();
+                    setActiveTab('hero');
+                    openHeroModal();
                   }}
                   className="p-5 bg-white/5 border border-white/10 hover:border-white/30 text-left rounded-xl transition-all group"
                 >
                   <span className="text-xs font-mono font-extrabold uppercase text-white group-hover:text-amber-400 transition-colors block mb-1">
-                    + Tambah Anggota Tim
+                    + Tambah Slide Hero
                   </span>
-                  <p className="text-[11px] text-slate-400 font-light">Upload avatar ke Cloudinary &amp; edit profil</p>
+                  <p className="text-[11px] text-slate-400 font-light">Upload foto slider utama ke Cloudinary CDN</p>
                 </button>
 
                 <button
@@ -859,13 +995,16 @@ export default function AdminPage() {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('media')}
+                  onClick={() => {
+                    setActiveTab('members');
+                    openMemberModal();
+                  }}
                   className="p-5 bg-white/5 border border-white/10 hover:border-white/30 text-left rounded-xl transition-all group"
                 >
-                  <span className="text-xs font-mono font-extrabold uppercase text-emerald-400 block mb-1">
-                    Kelola Foto Cloudinary
+                  <span className="text-xs font-mono font-extrabold uppercase text-white group-hover:text-amber-400 transition-colors block mb-1">
+                    + Tambah Anggota Tim
                   </span>
-                  <p className="text-[11px] text-slate-400 font-light">Lihat seluruh foto yang tersimpan di CDN</p>
+                  <p className="text-[11px] text-slate-400 font-light">Upload avatar ke Cloudinary &amp; edit profil</p>
                 </button>
               </div>
             </div>
@@ -931,26 +1070,160 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="p-5 pt-0 flex items-center justify-between gap-2 border-t border-white/10 mt-4">
-                      <button
-                        onClick={() => openMemberModal(member)}
-                        className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
-                      >
-                        {icons.edit}
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (confirm(`Hapus ${member.name} dari anggota tim?`)) {
-                            await deleteTeamMember(member.id);
-                            showToast('✓ Anggota berhasil dihapus');
+                    <div className="p-5 pt-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 mt-4">
+                      <label className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold transition-all text-xs font-mono uppercase inline-flex items-center gap-1.5 rounded cursor-pointer shadow">
+                        {icons.upload}
+                        <span>Ganti Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) =>
+                            handleUploadInput(e, 'member', async (url) => {
+                              const ok = await changeTeamMemberAvatar(member.id, url);
+                              if (ok) {
+                                showToast(`✓ Foto avatar "${member.name}" berhasil diperbarui!`);
+                                await refreshContent();
+                              } else {
+                                alert('Gagal menyimpan foto ke server.');
+                              }
+                            })
                           }
-                        }}
-                        className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
-                      >
-                        {icons.delete}
-                        <span>Hapus</span>
-                      </button>
+                        />
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => openMemberModal(member)}
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
+                        >
+                          {icons.edit}
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Hapus ${member.name} dari anggota tim?`)) {
+                              await deleteTeamMember(member.id);
+                              showToast('✓ Anggota berhasil dihapus');
+                              await refreshContent();
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
+                        >
+                          {icons.delete}
+                          <span>Hapus</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: SLIDER HERO UTAMA */}
+        {activeTab === 'hero' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-white uppercase tracking-tight">
+                  Fullscreen Hero Banner Slider
+                </h3>
+                <p className="text-xs text-slate-400 font-light mt-1">
+                  Foto slider ini adalah gambar pertama yang dilihat pengunjung saat membuka halaman utama website.
+                </p>
+              </div>
+              <button
+                onClick={() => openHeroModal()}
+                className="px-5 py-2.5 bg-white text-black font-extrabold uppercase text-xs tracking-wider rounded hover:bg-slate-200 transition-colors inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>+</span>
+                <span>Tambah Slide Baru</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {heroSlides.map((slide, idx) => {
+                const isCloudinary = slide.image.includes('res.cloudinary.com');
+                return (
+                  <div
+                    key={slide.id || idx}
+                    className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/30 transition-all group shadow-xl"
+                  >
+                    <div>
+                      <div className="relative w-full aspect-video overflow-hidden bg-black">
+                        <img
+                          src={slide.image}
+                          alt={slide.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/80 backdrop-blur-md border border-white/15 text-[10px] font-mono text-white">
+                          SLIDE #{idx + 1}
+                        </div>
+                        <div className="absolute top-3 right-3">
+                          {isCloudinary ? (
+                            <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-md">
+                              Cloudinary
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/10 border border-white/20 text-slate-300 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-md">
+                              Local File
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-6 space-y-2">
+                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block font-bold">
+                          {slide.category}
+                        </span>
+                        <h3 className="text-lg font-black text-white leading-tight uppercase">
+                          {slide.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="p-6 pt-0 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 mt-4">
+                      <label className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold transition-all text-xs font-mono uppercase inline-flex items-center gap-1.5 rounded cursor-pointer shadow">
+                        {icons.upload}
+                        <span>Ganti Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) =>
+                            handleUploadInput(e, 'hero', async (url) => {
+                              const ok = await changeHeroSlideImage(slide.id, url);
+                              if (ok) {
+                                showToast(`✓ Foto Hero Slide #${idx + 1} berhasil diperbarui!`);
+                                await refreshContent();
+                              } else {
+                                alert('Gagal menyimpan foto slide ke server.');
+                              }
+                            })
+                          }
+                        />
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => openHeroModal(slide)}
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded cursor-pointer"
+                        >
+                          {icons.edit}
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHero(slide.id)}
+                          disabled={heroSlides.length <= 1}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                          title={heroSlides.length <= 1 ? "Minimal harus ada 1 slide" : "Hapus slide"}
+                        >
+                          {icons.delete}
+                          <span>Hapus</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1002,26 +1275,49 @@ export default function AdminPage() {
                       <p className="text-xs text-slate-300 font-light">{item.subtitle}</p>
                     </div>
 
-                    <div className="p-6 pt-0 flex items-center justify-end gap-3 border-t border-white/10 mt-auto">
-                      <button
-                        onClick={() => openShowcaseModal(item)}
-                        className="px-4 py-2 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
-                      >
-                        {icons.edit}
-                        <span>Edit Karya</span>
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (confirm(`Hapus karya "${item.title}"?`)) {
-                            await deleteShowcaseItem(item.id);
-                            showToast('✓ Karya berhasil dihapus');
+                    <div className="p-6 pt-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 mt-auto">
+                      <label className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold transition-all text-xs font-mono uppercase inline-flex items-center gap-1.5 rounded cursor-pointer shadow">
+                        {icons.upload}
+                        <span>Ganti Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) =>
+                            handleUploadInput(e, 'showcase', async (url) => {
+                              const ok = await changeShowcaseItemImage(item.id, url);
+                              if (ok) {
+                                showToast(`✓ Foto Karya "${item.title}" berhasil diperbarui!`);
+                                await refreshContent();
+                              } else {
+                                alert('Gagal menyimpan foto karya ke server.');
+                              }
+                            })
                           }
-                        }}
-                        className="px-4 py-2 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
-                      >
-                        {icons.delete}
-                        <span>Hapus</span>
-                      </button>
+                        />
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => openShowcaseModal(item)}
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white hover:text-black transition-all text-xs font-mono font-bold text-white uppercase inline-flex items-center gap-1.5 rounded"
+                        >
+                          {icons.edit}
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Hapus karya "${item.title}"?`)) {
+                              await deleteShowcaseItem(item.id);
+                              showToast('✓ Karya berhasil dihapus');
+                              await refreshContent();
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-rose-600 hover:text-white transition-all text-xs font-mono font-bold text-slate-400 uppercase inline-flex items-center gap-1.5 rounded"
+                        >
+                          {icons.delete}
+                          <span>Hapus</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1052,10 +1348,10 @@ export default function AdminPage() {
                   className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white font-mono text-xs uppercase tracking-wider rounded transition-colors inline-flex items-center gap-2"
                 >
                   <span className={isMediaLoading ? 'animate-spin' : ''}>↺</span>
-                  <span>Refresh Galeri</span>
+                  <span>{isMediaLoading ? 'Memuat...' : 'Muat Ulang'}</span>
                 </button>
 
-                <label className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase font-mono tracking-wider rounded transition-colors cursor-pointer inline-flex items-center gap-2">
+                <label className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs font-mono uppercase tracking-wider rounded cursor-pointer inline-flex items-center gap-2 transition-colors shadow">
                   {icons.upload}
                   <span>Upload Foto Baru</span>
                   <input
@@ -1070,85 +1366,71 @@ export default function AdminPage() {
 
             {/* Media Grid */}
             {isMediaLoading ? (
-              <div className="p-16 text-center bg-[#0a0a0d] border border-white/10 rounded-2xl font-mono text-xs text-slate-400">
+              <div className="p-16 text-center text-slate-400 font-mono text-xs uppercase tracking-widest bg-[#0a0a0d] border border-white/10 rounded-2xl">
                 <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mx-auto mb-3" />
-                <span>MEMUAT FOTO DARI CLOUDINARY...</span>
+                Memuat galeri Cloudinary...
               </div>
             ) : filteredMedia.length === 0 ? (
-              <div className="p-16 text-center bg-[#0a0a0d] border border-white/10 rounded-2xl font-mono text-xs text-slate-400 space-y-3">
-                <p>Tidak ada foto yang cocok dengan pencarian.</p>
-                <label className="inline-block px-5 py-2.5 bg-white text-black font-extrabold text-xs uppercase cursor-pointer rounded">
-                  Upload Foto Sekarang
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleUploadInput(e, 'media')}
-                  />
-                </label>
+              <div className="p-16 text-center text-slate-400 font-mono text-xs uppercase tracking-widest bg-[#0a0a0d] border border-white/10 rounded-2xl">
+                Tidak ada foto Cloudinary yang ditemukan.
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filteredMedia.map((media) => {
-                  const isCopied = copiedUrl === media.secure_url;
-                  return (
-                    <div
-                      key={media.public_id}
-                      className="bg-[#0a0a0d] border border-white/10 rounded-xl overflow-hidden group hover:border-white/40 transition-all flex flex-col justify-between"
-                    >
-                      <div className="relative aspect-square bg-black overflow-hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredMedia.map((m) => (
+                  <div
+                    key={m.public_id}
+                    className="bg-[#0a0a0d] border border-white/10 rounded-2xl overflow-hidden hover:border-white/30 transition-all group flex flex-col justify-between shadow-xl"
+                  >
+                    <div>
+                      <div className="relative aspect-video overflow-hidden bg-black">
                         <img
-                          src={media.secure_url}
-                          alt={media.public_id}
+                          src={m.secure_url}
+                          alt={m.public_id}
                           loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-mono text-white uppercase">
-                              {media.format}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteCloudinary(media.public_id)}
-                              className="p-1 rounded bg-rose-600/80 hover:bg-rose-600 text-white text-[10px]"
-                              title="Hapus dari Cloudinary"
-                            >
-                              ✕
-                            </button>
-                          </div>
-
-                          <div className="space-y-1">
-                            <button
-                              onClick={() => handleCopyUrl(media.secure_url)}
-                              className="w-full py-1.5 px-2 bg-white text-black font-mono text-[9px] font-bold uppercase rounded hover:bg-slate-200 transition-colors flex items-center justify-center gap-1"
-                            >
-                              {icons.copy}
-                              <span>{isCopied ? 'Tersalin!' : 'Salin URL'}</span>
-                            </button>
-                            <a
-                              href={media.secure_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-full py-1 px-2 bg-black/80 text-white font-mono text-[9px] uppercase rounded hover:bg-white/20 transition-colors text-center block"
-                            >
-                              Buka Asli ↗
-                            </a>
-                          </div>
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/80 text-[9px] font-mono text-slate-300 uppercase border border-white/10">
+                          {m.format}
                         </div>
                       </div>
 
-                      <div className="p-3 space-y-1">
-                        <p className="text-[10px] font-mono text-white truncate" title={media.public_id}>
-                          {media.public_id.split('/').pop()}
+                      <div className="p-4 space-y-1">
+                        <p className="text-xs font-mono text-white truncate font-bold" title={m.public_id}>
+                          {m.public_id.split('/').pop()}
                         </p>
-                        <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
-                          <span>{media.width}x{media.height}</span>
-                          <span>{Math.round(media.bytes / 1024)} KB</span>
-                        </div>
+                        <p className="text-[10px] font-mono text-slate-400">
+                          {m.width}x{m.height} px &bull; {(m.bytes / 1024).toFixed(1)} KB
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="p-4 pt-0 border-t border-white/5 space-y-2 mt-2">
+                      <button
+                        onClick={() => setQuickApplyModal({ isOpen: true, url: m.secure_url })}
+                        className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-mono font-black uppercase tracking-wider rounded transition-colors inline-flex items-center justify-center gap-1.5 shadow"
+                      >
+                        <span>🌟 Gunakan Foto Ini</span>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCopyUrl(m.secure_url)}
+                          className="flex-1 py-1.5 bg-white/10 hover:bg-white hover:text-black text-slate-200 text-[10px] font-mono uppercase tracking-wider rounded transition-colors inline-flex items-center justify-center gap-1"
+                        >
+                          {icons.copy}
+                          <span>{copiedUrl === m.secure_url ? 'Disalin!' : 'Salin URL'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCloudinary(m.public_id)}
+                          className="px-2.5 py-1.5 bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 text-[10px] font-mono uppercase rounded transition-colors"
+                          title="Hapus dari Cloudinary"
+                        >
+                          {icons.delete}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1581,6 +1863,379 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* MODAL: TAMBAH / EDIT HERO SLIDE */}
+      {isHeroModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
+          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-8 space-y-6 overflow-y-auto max-h-[90vh] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+                  BANNER HERO &bull; HALAMAN UTAMA
+                </span>
+                <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                  {editingHero ? 'Edit Slide Hero' : 'Tambah Slide Hero Baru'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsHeroModalOpen(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveHero} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-400 font-mono font-bold uppercase mb-1 text-[10px]">
+                  Judul Utama (Headline) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.title}
+                  onChange={(e) => setHeroForm({ ...heroForm, title: e.target.value })}
+                  placeholder="Contoh: CRAFTING UNFORGETTABLE EXPERIENCES"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-mono font-bold uppercase mb-1 text-[10px]">
+                  Sub-Judul / Kategori Tag *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.category}
+                  onChange={(e) => setHeroForm({ ...heroForm, category: e.target.value })}
+                  placeholder="Contoh: Premier Visual Storytelling & Production Studio"
+                  className="w-full px-4 py-3 bg-black border border-white/15 text-white font-mono focus:outline-none focus:border-white rounded"
+                />
+              </div>
+
+              {/* Hero Image Upload with Cloudinary */}
+              <div className="space-y-3 p-4 bg-white/5 border border-white/10 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <label className="text-slate-300 font-mono font-bold uppercase text-[10px]">
+                    Foto Background Hero (Cloudinary) *
+                  </label>
+                  {heroForm.image.includes('res.cloudinary.com') && (
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold uppercase rounded">
+                      Cloudinary CDN
+                    </span>
+                  )}
+                </div>
+
+                {heroForm.image ? (
+                  <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/20 shrink-0 bg-black relative">
+                    <img src={heroForm.image} alt="Hero Preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full aspect-video rounded-xl border border-dashed border-white/20 flex items-center justify-center shrink-0 bg-white/5 text-slate-500 font-mono text-[10px]">
+                    Belum ada Foto Background
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-black hover:bg-slate-200 rounded text-xs font-mono font-bold uppercase cursor-pointer transition-all shadow">
+                    {icons.upload}
+                    <span>Upload ke Cloudinary</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleUploadInput(e, 'hero', (url) =>
+                          setHeroForm((prev) => ({ ...prev, image: url }))
+                        )
+                      }
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => openCloudinaryPicker('hero')}
+                    className="py-3 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-xs font-mono font-bold uppercase text-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    {icons.cloud}
+                    <span>Pilih dari Galeri</span>
+                  </button>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <span className="text-[9px] font-mono text-slate-400 uppercase">URL / Path Foto Hero:</span>
+                  <input
+                    type="text"
+                    required
+                    value={heroForm.image}
+                    onChange={(e) => setHeroForm({ ...heroForm, image: e.target.value })}
+                    placeholder="https://res.cloudinary.com/..."
+                    className="w-full px-3 py-2 bg-black border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-white rounded"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="submit"
+                  className="flex-1 py-4 bg-white text-black font-extrabold uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors cursor-pointer rounded"
+                >
+                  Simpan Slide Hero &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHeroModalOpen(false)}
+                  className="px-6 py-4 bg-white/10 text-white font-mono font-bold uppercase text-xs cursor-pointer rounded"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: QUICK APPLY / LANGSUNG TAMPILKAN DI HALAMAN UTAMA */}
+      {quickApplyModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
+          <div className="bg-[#0a0a0c] border border-white/20 rounded-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <span className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-widest block">
+                  UPLOAD BERHASIL &bull; TAMPILKAN DI WEBSITE
+                </span>
+                <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                  Tampilkan Foto di Halaman Utama?
+                </h3>
+              </div>
+              <button
+                onClick={() => setQuickApplyModal({ isOpen: false, url: '' })}
+                className="text-slate-400 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/20 bg-black relative">
+                <img src={quickApplyModal.url} alt="Uploaded preview" className="w-full h-full object-cover" />
+              </div>
+
+              <p className="text-xs text-slate-300 font-mono leading-relaxed">
+                Foto berhasil diunggah ke Cloudinary CDN! Pilih bagian website mana yang ingin langsung diperbarui:
+              </p>
+
+              {/* Category Selector Tabs */}
+              <div className="grid grid-cols-3 gap-2 p-1 bg-white/5 border border-white/10 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickApplyCategory('hero');
+                    setQuickApplyTargetId(heroSlides[0]?.id || '');
+                  }}
+                  className={`py-2 text-xs font-mono font-bold uppercase rounded transition-colors ${
+                    quickApplyCategory === 'hero' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Slide Hero
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickApplyCategory('showcase');
+                    setQuickApplyTargetId(showcaseItems[0]?.id || '');
+                  }}
+                  className={`py-2 text-xs font-mono font-bold uppercase rounded transition-colors ${
+                    quickApplyCategory === 'showcase' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Showcase
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickApplyCategory('member');
+                    setQuickApplyTargetId(teamMembers[0]?.id || '');
+                  }}
+                  className={`py-2 text-xs font-mono font-bold uppercase rounded transition-colors ${
+                    quickApplyCategory === 'member' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Anggota Tim
+                </button>
+              </div>
+
+              {/* Target List based on Category */}
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {quickApplyCategory === 'hero' && (
+                  <>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase font-bold">Pilih slide hero yang ingin diganti gambarnya:</p>
+                    {heroSlides.map((slide, idx) => (
+                      <button
+                        key={slide.id || idx}
+                        type="button"
+                        onClick={async () => {
+                          const imgUrl = quickApplyModal.url;
+                          const ok = await changeHeroSlideImage(slide.id, imgUrl);
+                          if (ok) {
+                            showToast(`✓ Foto Hero Slide #${idx + 1} berhasil diperbarui!`);
+                            setQuickApplyModal({ isOpen: false, url: '' });
+                            await refreshContent();
+                          } else {
+                            alert('Gagal memperbarui slide hero ke server.');
+                          }
+                        }}
+                        className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-400 rounded-xl text-left transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img src={slide.image} alt={slide.title} className="w-12 h-8 object-cover rounded bg-black" />
+                          <div>
+                            <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">Slide #{idx + 1}</span>
+                            <span className="text-xs font-bold text-white truncate max-w-xs block">{slide.title}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-emerald-400">&rarr; Ganti</span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const imgUrl = quickApplyModal.url;
+                        setQuickApplyModal({ isOpen: false, url: '' });
+                        setHeroForm({
+                          title: '',
+                          category: 'Premier Visual Storytelling & Production Studio',
+                          image: imgUrl,
+                        });
+                        setEditingHero(null);
+                        setIsHeroModalOpen(true);
+                      }}
+                      className="w-full p-2.5 bg-white/10 hover:bg-white/20 border border-dashed border-white/20 text-white rounded-xl text-xs font-mono font-bold uppercase text-center block mt-2"
+                    >
+                      + Tambah Sebagai Slide Hero Baru
+                    </button>
+                  </>
+                )}
+
+                {quickApplyCategory === 'showcase' && (
+                  <>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase font-bold">Pilih karya showcase yang ingin diganti fotonya:</p>
+                    {showcaseItems.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={async () => {
+                          const imgUrl = quickApplyModal.url;
+                          const ok = await changeShowcaseItemImage(item.id, imgUrl);
+                          if (ok) {
+                            showToast(`✓ Foto Karya "${item.title}" berhasil diperbarui!`);
+                            setQuickApplyModal({ isOpen: false, url: '' });
+                            await refreshContent();
+                          } else {
+                            alert('Gagal memperbarui foto karya ke server.');
+                          }
+                        }}
+                        className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-400 rounded-xl text-left transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img src={item.image} alt={item.title} className="w-12 h-8 object-cover rounded bg-black" />
+                          <div>
+                            <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold block">{item.category}</span>
+                            <span className="text-xs font-bold text-white truncate max-w-xs block">{item.title}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-emerald-400">&rarr; Ganti</span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const imgUrl = quickApplyModal.url;
+                        setQuickApplyModal({ isOpen: false, url: '' });
+                        setShowcaseForm({
+                          title: '',
+                          subtitle: '',
+                          category: 'Concert & Festival',
+                          image: imgUrl,
+                        });
+                        setEditingShowcase(null);
+                        setIsShowcaseModalOpen(true);
+                      }}
+                      className="w-full p-2.5 bg-white/10 hover:bg-white/20 border border-dashed border-white/20 text-white rounded-xl text-xs font-mono font-bold uppercase text-center block mt-2"
+                    >
+                      + Tambah Sebagai Karya Showcase Baru
+                    </button>
+                  </>
+                )}
+
+                {quickApplyCategory === 'member' && (
+                  <>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase font-bold">Pilih anggota tim yang ingin diganti fotonya:</p>
+                    {teamMembers.map((member) => (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={async () => {
+                          const imgUrl = quickApplyModal.url;
+                          const ok = await changeTeamMemberAvatar(member.id, imgUrl);
+                          if (ok) {
+                            showToast(`✓ Foto Avatar "${member.name}" berhasil diperbarui!`);
+                            setQuickApplyModal({ isOpen: false, url: '' });
+                            await refreshContent();
+                          } else {
+                            alert('Gagal memperbarui foto avatar ke server.');
+                          }
+                        }}
+                        className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-400 rounded-xl text-left transition-all flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img src={member.avatar} alt={member.name} className="w-10 h-10 object-cover object-top rounded-full bg-black border border-white/10" />
+                          <div>
+                            <span className="text-xs font-bold text-white block">{member.name}</span>
+                            <span className="text-[10px] font-mono text-slate-400 block">{member.role}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-slate-400 group-hover:text-emerald-400">&rarr; Ganti</span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const imgUrl = quickApplyModal.url;
+                        setQuickApplyModal({ isOpen: false, url: '' });
+                        setMemberForm({
+                          name: '',
+                          role: '',
+                          avatar: imgUrl,
+                          motto: '',
+                          bio: '',
+                          highlights: '',
+                        });
+                        setEditingMember(null);
+                        setIsMemberModalOpen(true);
+                      }}
+                      className="w-full p-2.5 bg-white/10 hover:bg-white/20 border border-dashed border-white/20 text-white rounded-xl text-xs font-mono font-bold uppercase text-center block mt-2"
+                    >
+                      + Tambah Sebagai Anggota Baru
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="pt-2 text-center border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setQuickApplyModal({ isOpen: false, url: '' })}
+                  className="text-slate-400 hover:text-white font-mono text-xs underline cursor-pointer"
+                >
+                  Selesai, hanya simpan di Galeri Cloudinary
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: CLOUDINARY MEDIA PICKER */}
       {isPickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-6">
@@ -1591,7 +2246,7 @@ export default function AdminPage() {
                   PILIH DARI CLOUDINARY
                 </span>
                 <h3 className="text-xl font-black uppercase text-white tracking-tight">
-                  Pilih Foto untuk {pickerTarget === 'member' ? 'Anggota Tim' : 'Karya Showcase'}
+                  Pilih Foto untuk {pickerTarget === 'member' ? 'Anggota Tim' : pickerTarget === 'hero' ? 'Slide Hero Halaman Utama' : 'Karya Showcase'}
                 </h3>
               </div>
               <button
@@ -1613,7 +2268,7 @@ export default function AdminPage() {
                   accept="image/*"
                   className="hidden"
                   onChange={(e) =>
-                    handleUploadInput(e, pickerTarget || 'media', (url) => handleSelectFromPicker(url))
+                    handleUploadInput(e, pickerTarget || 'showcase', (url) => handleSelectFromPicker(url))
                   }
                 />
               </label>

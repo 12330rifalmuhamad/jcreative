@@ -101,5 +101,25 @@
       "message": "Kami ingin mengajukan liputan festival musik outdoor 3 hari di Bali dengan konsep 4K multicam & drone aftermovie.",
       "createdAt": "1 Okt 2026, 14.30"
     }
+  ],
+  "heroSlides": [
+    {
+      "id": "hero-1",
+      "title": "CRAFTING UNFORGETTABLE EXPERIENCES",
+      "category": "Premier Visual Storytelling & Production Studio",
+      "image": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg"
+    },
+    {
+      "id": "hero-2",
+      "title": "ELEVATE YOUR VISUAL IDENTITY",
+      "category": "World-Class Cinematography & Media Excellence",
+      "image": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg"
+    },
+    {
+      "id": "hero-3",
+      "title": "WHERE PASSION MEETS PRECISION",
+      "category": "End-to-End Creative Film & Media Production",
+      "image": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg"
+    }
   ]
 }

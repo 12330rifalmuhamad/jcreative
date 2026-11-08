@@ -3,13 +3,23 @@ import fs from 'fs';
 import path from 'path';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const DATA_DIR = path.join(process.cwd(), 'src', 'data');
 const DATA_FILE = path.join(DATA_DIR, 'content.json');
 
+export interface HeroSlide {
+  id: string;
+  title: string;
+  category: string;
+  image: string;
+}
+
 interface ContentData {
   teamMembers: any[];
   showcaseItems: any[];
+  heroSlides: HeroSlide[];
   services: any[];
   inquiries: any[];
 }
@@ -83,6 +93,26 @@ const DEFAULT_DATA: ContentData = {
       category: 'Official Reel',
     },
   ],
+  heroSlides: [
+    {
+      id: 'hero-1',
+      title: 'CRAFTING UNFORGETTABLE EXPERIENCES',
+      category: 'Premier Visual Storytelling & Production Studio',
+      image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
+    },
+    {
+      id: 'hero-2',
+      title: 'ELEVATE YOUR VISUAL IDENTITY',
+      category: 'World-Class Cinematography & Media Excellence',
+      image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg',
+    },
+    {
+      id: 'hero-3',
+      title: 'WHERE PASSION MEETS PRECISION',
+      category: 'End-to-End Creative Film & Media Production',
+      image: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg',
+    },
+  ],
   services: [
     {
       id: '01',
@@ -130,7 +160,17 @@ function readData(): ContentData {
       return DEFAULT_DATA;
     }
     const content = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (!parsed.heroSlides || !Array.isArray(parsed.heroSlides) || parsed.heroSlides.length === 0) {
+      parsed.heroSlides = DEFAULT_DATA.heroSlides;
+    }
+    if (!parsed.teamMembers || !Array.isArray(parsed.teamMembers) || parsed.teamMembers.length === 0) {
+      parsed.teamMembers = DEFAULT_DATA.teamMembers;
+    }
+    if (!parsed.showcaseItems || !Array.isArray(parsed.showcaseItems) || parsed.showcaseItems.length === 0) {
+      parsed.showcaseItems = DEFAULT_DATA.showcaseItems;
+    }
+    return parsed;
   } catch (error) {
     console.error('Error reading content.json:', error);
     return DEFAULT_DATA;
@@ -152,10 +192,19 @@ function writeData(data: ContentData): boolean {
 
 export async function GET() {
   const data = readData();
-  return NextResponse.json({
-    success: true,
-    data,
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      data,
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -170,6 +219,7 @@ export async function POST(req: NextRequest) {
           const updated = {
             teamMembers: payload.teamMembers || current.teamMembers,
             showcaseItems: payload.showcaseItems || current.showcaseItems,
+            heroSlides: payload.heroSlides || current.heroSlides,
             services: payload.services || current.services,
             inquiries: payload.inquiries || current.inquiries,
           };
@@ -182,7 +232,7 @@ export async function POST(req: NextRequest) {
       case 'addTeamMember': {
         const newMember = {
           ...payload,
-          id: `member-${Date.now()}`,
+          id: payload.id || `member-${Date.now()}`,
         };
         current.teamMembers = [newMember, ...current.teamMembers];
         writeData(current);
@@ -191,9 +241,12 @@ export async function POST(req: NextRequest) {
 
       case 'updateTeamMember': {
         const { id, member } = payload;
-        current.teamMembers = current.teamMembers.map((item) =>
-          item.id === id ? { ...item, ...member } : item
-        );
+        const index = current.teamMembers.findIndex((item) => item.id === id);
+        if (index !== -1) {
+          current.teamMembers[index] = { ...current.teamMembers[index], ...member };
+        } else {
+          current.teamMembers.push({ id, ...member });
+        }
         writeData(current);
         return NextResponse.json({ success: true, data: current });
       }
@@ -208,7 +261,7 @@ export async function POST(req: NextRequest) {
       case 'addShowcaseItem': {
         const newItem = {
           ...payload,
-          id: `item-${Date.now()}`,
+          id: payload.id || `item-${Date.now()}`,
         };
         current.showcaseItems = [newItem, ...current.showcaseItems];
         writeData(current);
@@ -217,9 +270,12 @@ export async function POST(req: NextRequest) {
 
       case 'updateShowcaseItem': {
         const { id, item } = payload;
-        current.showcaseItems = current.showcaseItems.map((s) =>
-          s.id === id ? { ...s, ...item } : s
-        );
+        const index = current.showcaseItems.findIndex((s) => s.id === id);
+        if (index !== -1) {
+          current.showcaseItems[index] = { ...current.showcaseItems[index], ...item };
+        } else {
+          current.showcaseItems.push({ id, ...item });
+        }
         writeData(current);
         return NextResponse.json({ success: true, data: current });
       }
@@ -227,6 +283,36 @@ export async function POST(req: NextRequest) {
       case 'deleteShowcaseItem': {
         const { id } = payload;
         current.showcaseItems = current.showcaseItems.filter((s) => s.id !== id);
+        writeData(current);
+        return NextResponse.json({ success: true, data: current });
+      }
+
+      case 'addHeroSlide': {
+        const newSlide = {
+          ...payload,
+          id: payload.id || `hero-${Date.now()}`,
+        };
+        current.heroSlides = [...(current.heroSlides || []), newSlide];
+        writeData(current);
+        return NextResponse.json({ success: true, data: current });
+      }
+
+      case 'updateHeroSlide': {
+        const { id, slide } = payload;
+        current.heroSlides = current.heroSlides || [];
+        const index = current.heroSlides.findIndex((s) => s.id === id);
+        if (index !== -1) {
+          current.heroSlides[index] = { ...current.heroSlides[index], ...slide };
+        } else {
+          current.heroSlides.push({ id, ...slide });
+        }
+        writeData(current);
+        return NextResponse.json({ success: true, data: current });
+      }
+
+      case 'deleteHeroSlide': {
+        const { id } = payload;
+        current.heroSlides = (current.heroSlides || []).filter((s) => s.id !== id);
         writeData(current);
         return NextResponse.json({ success: true, data: current });
       }

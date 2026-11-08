@@ -16,12 +16,13 @@ export default function ShowcaseGrid() {
       <div className="grid grid-cols-1 md:grid-cols-2">
         {items.map((item) => (
           <div
-            key={item.id}
+            key={`${item.id}-${item.image}`}
             onClick={() => setActiveItem(item)}
             className="group relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden bg-black cursor-pointer border-b border-r border-white/10"
           >
             {/* Background Image */}
             <Image
+              key={item.image}
               src={item.image}
               alt={item.title}
               fill
@@ -58,6 +59,7 @@ export default function ShowcaseGrid() {
           <div className="relative w-full max-w-4xl bg-[#0c0c10] border border-white/20 rounded-2xl overflow-hidden">
             <div className="relative aspect-video">
               <Image
+                key={activeItem.image}
                 src={activeItem.image}
                 alt={activeItem.title}
                 fill

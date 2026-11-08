@@ -28,13 +28,14 @@ export default function Team() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {teamMembers.map((member, idx) => (
             <div
-              key={idx}
+              key={`${member.id || idx}-${member.avatar}`}
               className="bg-[#121218] border border-white/10 rounded-2xl overflow-hidden hover:border-white/30 transition-all duration-300 group flex flex-col justify-between shadow-xl"
             >
               <div>
                 {/* Profile Picture Container */}
                 <div className="relative w-full aspect-[4/5] overflow-hidden bg-white/5">
                   <Image
+                    key={member.avatar}
                     src={member.avatar}
                     alt={member.name}
                     fill
