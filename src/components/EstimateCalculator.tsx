@@ -6,37 +6,102 @@ interface EstimateCalculatorProps {
   onSelectEstimate: (details: string) => void;
 }
 
+const EVENT_TYPES = [
+  {
+    id: 'concert',
+    label: 'Konser & Festival Musik',
+    sub: 'Skala Stadion / Panggung Utama',
+    basePrice: 65000000,
+  },
+  {
+    id: 'corporate',
+    label: 'Corporate Gathering & Summit',
+    sub: 'Konferensi Nasional & Gala Dinner',
+    basePrice: 40000000,
+  },
+  {
+    id: 'exhibition',
+    label: 'Exhibition & Awarding Night',
+    sub: 'Expo, Karpet Merah, & Penganugerahan',
+    basePrice: 45000000,
+  },
+  {
+    id: 'private_event',
+    label: 'Conference & Private Event',
+    sub: 'Seminar Eksklusif & Intimate Gathering',
+    basePrice: 30000000,
+  },
+];
+
+const GEAR_PACKAGES = [
+  {
+    id: 'standard',
+    title: 'Dual-Cam System',
+    sub: '2 Unit Sony FX3/FX6 + 2 Crew',
+    multiplier: 1.0,
+  },
+  {
+    id: 'multicam',
+    title: 'Multicam System 8K',
+    sub: '3-4 Cam + Live Switch + Audio Board',
+    multiplier: 1.35,
+  },
+  {
+    id: 'master',
+    title: 'Full Production Crew',
+    sub: 'Multicam 8K + Drone FPV + Audio Master',
+    multiplier: 1.7,
+  },
+];
+
+const ADDONS = [
+  {
+    key: 'expressAftermovie',
+    label: 'Express 24-Hour Aftermovie Edit',
+    desc: 'Video recap highlight siap rilis dalam 24 jam',
+    price: 15000000,
+  },
+  {
+    key: 'aerialDrone',
+    label: 'Aerial FPV & Cinema Drone 4K',
+    desc: 'Liputan udara spektakuler venue & atmosfer panggung',
+    price: 12000000,
+  },
+  {
+    key: 'photoRecap',
+    label: 'Live Photo Recap & DaVinci Color',
+    desc: 'Foto event diedit on-site & grading warna profesional',
+    price: 10000000,
+  },
+  {
+    key: 'audioFeed',
+    label: 'Stereo Master Soundboard Feed',
+    desc: 'Rekaman audio stereo murni langsung dari audio console venue',
+    price: 8000000,
+  },
+];
+
 export default function EstimateCalculator({ onSelectEstimate }: EstimateCalculatorProps) {
-  const [projectType, setProjectType] = useState<'commercial' | 'music_video' | 'brand_film' | 'documentary'>('commercial');
+  const [selectedType, setSelectedType] = useState('concert');
   const [shootingDays, setShootingDays] = useState(1);
-  const [gearPackage, setGearPackage] = useState<'standard' | 'anamorphic' | 'master'>('anamorphic');
-  const [addons, setAddons] = useState<{ [key: string]: boolean }>({
-    colorGrading: true,
-    aerialDrone: false,
-    vfx3d: false,
-    audioScoring: true,
+  const [selectedGear, setSelectedGear] = useState('multicam');
+  const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: boolean }>({
+    expressAftermovie: true,
+    aerialDrone: true,
+    photoRecap: false,
+    audioFeed: true,
   });
 
-  // Base pricing matrix calculation
-  const basePrices = {
-    commercial: 75000000,
-    music_video: 45000000,
-    brand_film: 60000000,
-    documentary: 50000000,
-  };
-
-  const gearMultiplier = {
-    standard: 1,
-    anamorphic: 1.35,
-    master: 1.7,
-  };
+  const currentType = EVENT_TYPES.find((t) => t.id === selectedType) || EVENT_TYPES[0];
+  const currentGear = GEAR_PACKAGES.find((g) => g.id === selectedGear) || GEAR_PACKAGES[1];
 
   const calculateTotal = () => {
-    let base = basePrices[projectType] * shootingDays * gearMultiplier[gearPackage];
-    if (addons.colorGrading) base += 15000000;
-    if (addons.aerialDrone) base += 12000000;
-    if (addons.vfx3d) base += 25000000;
-    if (addons.audioScoring) base += 10000000;
+    let base = currentType.basePrice * shootingDays * currentGear.multiplier;
+    ADDONS.forEach((addon) => {
+      if (selectedAddons[addon.key]) {
+        base += addon.price;
+      }
+    });
     return base;
   };
 
@@ -47,15 +112,7 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
   }).format(calculateTotal());
 
   const handleApplyToForm = () => {
-    const typeLabel =
-      projectType === 'commercial'
-        ? 'Iklan Komersial / TVC'
-        : projectType === 'music_video'
-        ? 'Video Musik'
-        : projectType === 'brand_film'
-        ? 'Brand Film'
-        : 'Dokumenter Narrative';
-    const detailString = `Estimasi Proyek: ${typeLabel} | ${shootingDays} Hari Syuting | Paket Kamera: ${gearPackage.toUpperCase()} | Total Estimasi: ${formattedPrice}`;
+    const detailString = `Estimasi Acara: ${currentType.label} | Durasi: ${shootingDays} Hari | Sistem Liputan: ${currentGear.title} | Estimasi Anggaran: ${formattedPrice}`;
     onSelectEstimate(detailString);
   };
 
@@ -71,36 +128,39 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             SIMULASI <span className="text-slate-400">ESTIMASI ANGGARAN</span>
           </h2>
           <p className="text-slate-400 text-sm font-light mt-4 leading-relaxed">
-            Hitung perkiraan lingkup produksi dan anggaran proyek Anda secara transparan berdasarkan kebutuhan teknis dan durasi syuting.
+            Hitung perkiraan lingkup produksi dan anggaran dokumentasi acara Anda secara transparan berdasarkan kebutuhan teknis dan durasi acara.
           </p>
         </div>
 
         {/* Calculator Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Controls Column */}
-          <div className="lg:col-span-7 bg-[#111117] border border-white/15 rounded-3xl p-8 space-y-8 shadow-xl">
+          <div className="lg:col-span-7 bg-[#111117] border border-white/15 rounded-3xl p-6 sm:p-8 space-y-8 shadow-xl">
             {/* 1. Project Type Selector */}
             <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                1. Jenis Event &amp; Dokumentasi:
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 block mb-3">
+                1. Kategori &amp; Konsep Acara:
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'commercial', label: 'Konser & Festival Musik' },
-                  { id: 'music_video', label: 'Corporate Gathering & Summit' },
-                  { id: 'brand_film', label: 'Exhibition & Awarding Night' },
-                  { id: 'documentary', label: 'Conference & Private Event' },
-                ].map((type) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {EVENT_TYPES.map((type) => (
                   <button
                     key={type.id}
-                    onClick={() => setProjectType(type.id as any)}
-                    className={`py-3 px-4 rounded-xl text-xs font-bold text-left transition-all cursor-pointer border ${
-                      projectType === type.id
+                    type="button"
+                    onClick={() => setSelectedType(type.id)}
+                    className={`p-4 rounded-xl text-left transition-all cursor-pointer border ${
+                      selectedType === type.id
                         ? 'bg-white text-black border-white shadow-md'
                         : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
                     }`}
                   >
-                    {type.label}
+                    <div className="text-xs font-bold leading-tight">{type.label}</div>
+                    <div
+                      className={`text-[10px] font-mono mt-1 ${
+                        selectedType === type.id ? 'text-slate-700' : 'text-slate-400'
+                      }`}
+                    >
+                      {type.sub}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -109,10 +169,12 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
             {/* 2. Shooting Days */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                  2. Durasi Acara (Hari):
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+                  2. Durasi Hari Pelaksanaan Acara:
                 </label>
-                <span className="text-sm font-black text-white font-mono">{shootingDays} Hari</span>
+                <span className="text-sm font-black text-white font-mono px-3 py-1 bg-white/10 rounded-lg">
+                  {shootingDays} Hari
+                </span>
               </div>
               <input
                 type="range"
@@ -122,35 +184,38 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
                 onChange={(e) => setShootingDays(parseInt(e.target.value))}
                 className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                <span>1 Hari (Half/Full Day)</span>
-                <span>3 Hari</span>
-                <span>7 Hari</span>
+              <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1.5">
+                <span>1 Hari (Full Day)</span>
+                <span>3 Hari (Festival)</span>
+                <span>7 Hari (Series/Summit)</span>
               </div>
             </div>
 
             {/* 3. Gear & Resolution Package */}
             <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                3. Paket Kamera &amp; Tim Liputan:
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 block mb-3">
+                3. Paket Kamera &amp; Konfigurasi Tim:
               </label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: 'standard', title: 'Single / Dual Cam', sub: 'Sony FX3/FX6 + 2 Crew' },
-                  { id: 'anamorphic', title: 'Multicam System', sub: '3-4 Cam + Audio Feed' },
-                  { id: 'master', title: 'Cinema Full Crew', sub: 'Multicam + Drone + Live Stream' },
-                ].map((pkg) => (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {GEAR_PACKAGES.map((pkg) => (
                   <button
                     key={pkg.id}
-                    onClick={() => setGearPackage(pkg.id as any)}
-                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
-                      gearPackage === pkg.id
-                        ? 'bg-white text-black border-white'
+                    type="button"
+                    onClick={() => setSelectedGear(pkg.id)}
+                    className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${
+                      selectedGear === pkg.id
+                        ? 'bg-white text-black border-white shadow-md'
                         : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
                     }`}
                   >
                     <div className="text-xs font-black uppercase">{pkg.title}</div>
-                    <div className="text-[9px] opacity-75 font-mono mt-1">{pkg.sub}</div>
+                    <div
+                      className={`text-[9px] font-mono mt-1 ${
+                        selectedGear === pkg.id ? 'text-slate-700' : 'text-slate-400'
+                      }`}
+                    >
+                      {pkg.sub}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -158,33 +223,36 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
 
             {/* 4. Post-Production Addons */}
             <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-3">
-                4. Layanan Tambahan (Event Add-ons):
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 block mb-3">
+                4. Opsi Layanan Tambahan (Event Add-ons):
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { key: 'colorGrading', label: 'Express 24-Hour Aftermovie Edit' },
-                  { key: 'aerialDrone', label: 'Aerial Drone Event Coverage' },
-                  { key: 'vfx3d', label: 'Foto Highlight & Color Correct' },
-                  { key: 'audioScoring', label: 'Audio Multitrack Live Board Record' },
-                ].map((addon) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ADDONS.map((addon) => (
                   <label
                     key={addon.key}
-                    className={`flex items-center gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
-                      addons[addon.key]
+                    className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs cursor-pointer transition-colors ${
+                      selectedAddons[addon.key]
                         ? 'bg-white/15 border-white/40 text-white'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
                     }`}
                   >
                     <input
                       type="checkbox"
-                      checked={addons[addon.key]}
+                      checked={!!selectedAddons[addon.key]}
                       onChange={(e) =>
-                        setAddons({ ...addons, [addon.key]: e.target.checked })
+                        setSelectedAddons({
+                          ...selectedAddons,
+                          [addon.key]: e.target.checked,
+                        })
                       }
-                      className="rounded accent-white w-4 h-4"
+                      className="rounded accent-white w-4 h-4 mt-0.5"
                     />
-                    <span className="font-semibold">{addon.label}</span>
+                    <div>
+                      <span className="font-bold block text-white">{addon.label}</span>
+                      <span className="text-[10px] text-slate-400 font-light block mt-0.5">
+                        {addon.desc}
+                      </span>
+                    </div>
                   </label>
                 ))}
               </div>
@@ -192,40 +260,40 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
           </div>
 
           {/* Results Summary Box */}
-          <div className="lg:col-span-5 bg-[#14141c] border border-white/20 rounded-3xl p-8 space-y-6 sticky top-28 shadow-2xl">
+          <div className="lg:col-span-5 bg-[#14141c] border border-white/20 rounded-3xl p-6 sm:p-8 space-y-6 sticky top-28 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400 font-mono">
                 RINGKASAN ESTIMASI
               </span>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold border border-emerald-500/30">
-                TERMASUK TIM LENGKAP
+                LENGKAP DENGAN KRU
               </span>
             </div>
 
             <div className="space-y-3 text-xs text-slate-300">
-              <div className="flex justify-between">
-                <span>Tipe Proyek:</span>
-                <span className="font-bold text-white uppercase">{projectType.replace('_', ' ')}</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Kategori Acara:</span>
+                <span className="font-bold text-white text-right">{currentType.label}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Durasi Produksi:</span>
-                <span className="font-bold text-white font-mono">{shootingDays} Hari Syuting</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Durasi Acara:</span>
+                <span className="font-bold text-white font-mono">{shootingDays} Hari Pelaksanaan</span>
               </div>
-              <div className="flex justify-between">
-                <span>Kamera &amp; Lensa:</span>
-                <span className="font-bold text-white font-mono uppercase">{gearPackage}</span>
+              <div className="flex justify-between items-center py-1 border-b border-white/5">
+                <span className="text-slate-400">Sistem Kamera:</span>
+                <span className="font-bold text-white">{currentGear.title}</span>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-white/15">
+            <div className="pt-4 border-t border-white/15">
               <span className="text-xs text-slate-400 uppercase font-bold tracking-wider block mb-1">
                 ESTIMASI TOTAL KISARAN:
               </span>
               <div className="text-3xl sm:text-4xl font-black text-white tracking-tight">
                 {formattedPrice}
               </div>
-              <p className="text-[10px] text-slate-500 mt-2 font-mono">
-                *Estimasi awal mencakup sutradara, tim DP, lighting, peralatan kamera, dan draf pertama pasca-produksi.
+              <p className="text-[10px] text-slate-500 mt-2 font-mono leading-relaxed">
+                *Estimasi mencakup pengarah liputan, tim videografer/fotografer, perlengkapan kamera 8K, live soundboard feed, dan draf aftermovie pertama.
               </p>
             </div>
 

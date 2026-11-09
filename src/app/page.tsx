@@ -5,16 +5,21 @@ import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Statement from '@/components/Statement';
 import ShowcaseGrid from '@/components/ShowcaseGrid';
+import Services from '@/components/Services';
+import LogoMarquee from '@/components/LogoMarquee';
 import Creatives from '@/components/Creatives';
 import Team from '@/components/Team';
 import StoriesBanner from '@/components/StoriesBanner';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ShowreelModal from '@/components/ShowreelModal';
+import { useContent } from '@/context/ContentContext';
 
 export default function Home() {
   const [isReelOpen, setIsReelOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const { pageSettings } = useContent();
+  const visibility = pageSettings?.sectionVisibility;
 
   return (
     <main className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
@@ -22,25 +27,35 @@ export default function Home() {
       <Navbar onOpenContact={() => setIsContactModalOpen(true)} />
 
       {/* Fullscreen Hero Slider */}
-      <Hero onOpenReel={() => setIsReelOpen(true)} />
+      {visibility?.hero !== false && (
+        <Hero onOpenReel={() => setIsReelOpen(true)} />
+      )}
 
       {/* Motion & Stills Production Statement */}
-      <Statement />
+      {visibility?.statement !== false && <Statement />}
 
       {/* 2x2 Full Bleed Featured Works Grid */}
-      <ShowcaseGrid />
+      {visibility?.showcase !== false && <ShowcaseGrid />}
+
+      {/* Optional Creative Capabilities / Services */}
+      {visibility?.services && <Services />}
+
+      {/* Optional Client Brands Marquee */}
+      {visibility?.logoMarquee && <LogoMarquee />}
 
       {/* World Class Creatives Representation */}
-      <Creatives />
+      {visibility?.creatives !== false && <Creatives />}
 
       {/* Core Team & Member Cards */}
-      <Team />
+      {visibility?.team !== false && <Team />}
 
       {/* J Creative Stories Banner */}
-      <StoriesBanner onOpenReel={() => setIsReelOpen(true)} />
+      {visibility?.storiesBanner !== false && (
+        <StoriesBanner onOpenReel={() => setIsReelOpen(true)} />
+      )}
 
       {/* Contact Section */}
-      <ContactSection />
+      {visibility?.contact !== false && <ContactSection />}
 
       {/* Minimal Footer */}
       <Footer />

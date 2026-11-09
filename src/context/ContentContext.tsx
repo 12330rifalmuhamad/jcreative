@@ -45,6 +45,151 @@ export interface Inquiry {
   createdAt: string;
 }
 
+export interface PageSettings {
+  branding: {
+    siteTitle: string;
+    logoUrl: string;
+    tagline: string;
+  };
+  sectionVisibility: {
+    hero: boolean;
+    statement: boolean;
+    showcase: boolean;
+    services: boolean;
+    logoMarquee: boolean;
+    creatives: boolean;
+    team: boolean;
+    storiesBanner: boolean;
+    contact: boolean;
+  };
+  statement: {
+    badge: string;
+    title: string;
+    paragraph1: string;
+    paragraph2: string;
+    paragraph3: string;
+    paragraph4: string;
+  };
+  creatives: {
+    badge: string;
+    title: string;
+    description: string;
+    highlightRoles: string[];
+    locationNote: string;
+  };
+  storiesBanner: {
+    badge: string;
+    title: string;
+    description: string;
+    buttonText: string;
+    backgroundImage: string;
+  };
+  showreel: {
+    badge: string;
+    title: string;
+    videoUrl: string;
+    previewImage: string;
+    specsBadge: string;
+  };
+  contact: {
+    badge: string;
+    title: string;
+    description: string;
+    instagram: string;
+    instagramUrl: string;
+    email: string;
+    whatsapp: string;
+    whatsappNumber: string;
+    location: string;
+    successTitle: string;
+    successMessage: string;
+  };
+  footer: {
+    copyright: string;
+    socials: {
+      instagram: string;
+      vimeo: string;
+      youtube: string;
+      linkedin: string;
+    };
+  };
+}
+
+export const DEFAULT_PAGE_SETTINGS: PageSettings = {
+  branding: {
+    siteTitle: 'J Creative Division',
+    logoUrl: '/logo.jpg',
+    tagline: 'Specialist Event Documentation & Media Production',
+  },
+  sectionVisibility: {
+    hero: true,
+    statement: true,
+    showcase: true,
+    services: false,
+    logoMarquee: false,
+    creatives: true,
+    team: true,
+    storiesBanner: true,
+    contact: true,
+  },
+  statement: {
+    badge: 'ABOUT OUR PRODUCTION',
+    title: 'Specialist Event Documentation & Media Production',
+    paragraph1: 'Di dunia dokumentasi event, kami berdedikasi menangkap setiap momen berharga, antusiasme penonton, dan atmosfer magis dari setiap acara—mulai dari konser musik skala besar, festival, hingga corporate gathering dan konferensi nasional.',
+    paragraph2: 'Sebagai rumah produksi spesialis dokumentasi event profesional, kami mendokumentasikan setiap detail acara dengan standar visual sinematik tinggi, sistem multi-kamera 8K, dan drone aerial coverage.',
+    paragraph3: 'Tim videografer dan fotografer kami berpengalaman mengabadikan sorotan penting secara real-time, menyajikan video recap, same-day edit highlight, dan aftermovie berkelas yang siap tayang untuk kebutuhan media sosial & publikasi brand.',
+    paragraph4: 'Dengan pengalaman bertahun-tahun dalam dokumentasi acara berskala besar, kami menjamin eksekusi liputan yang cepat, presisi, dan mampu mengabadikan momen emosional yang berkesan bagi setiap klien.',
+  },
+  creatives: {
+    badge: 'WORLD CLASS CREW',
+    title: 'World Class Event Videographers & Crew',
+    description: 'J Creative didukung oleh tim spesialis liputan event profesional yang siap mengabadikan momen luar biasa di berbagai festival besar, konser, dan konferensi skala internasional.',
+    highlightRoles: [
+      'Event Directors',
+      'Multicam Operators',
+      'Event Photographers',
+      'Drone Pilots',
+    ],
+    locationNote: 'Berbasis di Indonesia dan siap diterjunkan ke lokasi event Anda di mana saja dengan kesiapan peralatan dan tim yang responsif.',
+  },
+  storiesBanner: {
+    badge: 'STORIES & HIGHLIGHTS',
+    title: 'J Creative Event Stories',
+    description: 'Divisi liputan sinematik J Creative khusus mengabadikan kemeriahan, energi, dan emosi autentik dari setiap acara. Kami percaya setiap event memiliki cerita unik yang patut diabadikan dalam bentuk video aftermovie dan foto recap berkelas sinema.',
+    buttonText: 'WATCH EVENT AFTERMOVIE',
+    backgroundImage: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg',
+  },
+  showreel: {
+    badge: 'MASTER CINEMATIC REEL // 2026',
+    title: 'Showreel Concert 2026',
+    videoUrl: '',
+    previewImage: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
+    specsBadge: '24fps 48kHz 8K HDR',
+  },
+  contact: {
+    badge: 'GET IN TOUCH',
+    title: "Let's Create Together",
+    description: 'Ready to bring your commercial, music video, or brand documentary vision to life? Connect with our executive producers.',
+    instagram: '@j.creative.official',
+    instagramUrl: 'https://www.instagram.com/j.creative.official/',
+    email: 'contact@jcreative.id',
+    whatsapp: '+62 812-3456-7890',
+    whatsappNumber: '6281234567890',
+    location: 'Jakarta & Bali, Indonesia',
+    successTitle: 'Brief Received',
+    successMessage: 'Our producers at J Creative Division will contact you within 24 hours.',
+  },
+  footer: {
+    copyright: '© 2026 J CREATIVE DIVISION. ALL RIGHTS RESERVED.',
+    socials: {
+      instagram: 'https://www.instagram.com/j.creative.official/',
+      vimeo: 'https://vimeo.com',
+      youtube: 'https://youtube.com',
+      linkedin: 'https://linkedin.com',
+    },
+  },
+};
+
 const DEFAULT_TEAM_MEMBERS: TeamMember[] = [
   {
     id: 'member-1',
@@ -179,8 +324,18 @@ interface ContentContextType {
   heroSlides: HeroSlide[];
   services: ServiceItem[];
   inquiries: Inquiry[];
+  pageSettings: PageSettings;
   isLoading: boolean;
   refreshContent: () => Promise<void>;
+  updatePageSettings: (settings: Partial<PageSettings>) => Promise<boolean>;
+  updateSectionVisibility: (visibility: Partial<PageSettings['sectionVisibility']>) => Promise<boolean>;
+  updateBranding: (branding: Partial<PageSettings['branding']>) => Promise<boolean>;
+  updateStatement: (statement: Partial<PageSettings['statement']>) => Promise<boolean>;
+  updateCreatives: (creatives: Partial<PageSettings['creatives']>) => Promise<boolean>;
+  updateStoriesBanner: (banner: Partial<PageSettings['storiesBanner']>) => Promise<boolean>;
+  updateShowreel: (showreel: Partial<PageSettings['showreel']>) => Promise<boolean>;
+  updateContactSettings: (contact: Partial<PageSettings['contact']>) => Promise<boolean>;
+  updateFooterSettings: (footer: Partial<PageSettings['footer']>) => Promise<boolean>;
   addTeamMember: (member: Omit<TeamMember, 'id'> & { id?: string }) => Promise<boolean>;
   updateTeamMember: (id: string, member: Partial<TeamMember>) => Promise<boolean>;
   deleteTeamMember: (id: string) => Promise<boolean>;
@@ -207,6 +362,7 @@ const STORAGE_KEYS = {
   HERO: 'jcreative_hero_slides',
   SERVICES: 'jcreative_services',
   INQUIRIES: 'jcreative_inquiries',
+  PAGE_SETTINGS: 'jcreative_page_settings',
   SYNC_TIMESTAMP: 'jcreative_last_sync_timestamp',
 };
 
@@ -216,6 +372,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(DEFAULT_HERO_SLIDES);
   const [services, setServices] = useState<ServiceItem[]>(DEFAULT_SERVICES);
   const [inquiries, setInquiries] = useState<Inquiry[]>(DEFAULT_INQUIRIES);
+  const [pageSettings, setPageSettings] = useState<PageSettings>(DEFAULT_PAGE_SETTINGS);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper to persist to localStorage
@@ -225,6 +382,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     heroSlides?: HeroSlide[];
     services?: ServiceItem[];
     inquiries?: Inquiry[];
+    pageSettings?: PageSettings;
   }) => {
     try {
       if (typeof window === 'undefined') return;
@@ -233,9 +391,28 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (data.heroSlides) localStorage.setItem(STORAGE_KEYS.HERO, JSON.stringify(data.heroSlides));
       if (data.services) localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(data.services));
       if (data.inquiries) localStorage.setItem(STORAGE_KEYS.INQUIRIES, JSON.stringify(data.inquiries));
+      if (data.pageSettings) localStorage.setItem(STORAGE_KEYS.PAGE_SETTINGS, JSON.stringify(data.pageSettings));
       localStorage.setItem(STORAGE_KEYS.SYNC_TIMESTAMP, Date.now().toString());
     } catch (_) {}
   }, []);
+
+  const mergePageSettings = (remoteSettings?: any): PageSettings => {
+    if (!remoteSettings) return DEFAULT_PAGE_SETTINGS;
+    return {
+      branding: { ...DEFAULT_PAGE_SETTINGS.branding, ...(remoteSettings.branding || {}) },
+      sectionVisibility: { ...DEFAULT_PAGE_SETTINGS.sectionVisibility, ...(remoteSettings.sectionVisibility || {}) },
+      statement: { ...DEFAULT_PAGE_SETTINGS.statement, ...(remoteSettings.statement || {}) },
+      creatives: { ...DEFAULT_PAGE_SETTINGS.creatives, ...(remoteSettings.creatives || {}) },
+      storiesBanner: { ...DEFAULT_PAGE_SETTINGS.storiesBanner, ...(remoteSettings.storiesBanner || {}) },
+      showreel: { ...DEFAULT_PAGE_SETTINGS.showreel, ...(remoteSettings.showreel || {}) },
+      contact: { ...DEFAULT_PAGE_SETTINGS.contact, ...(remoteSettings.contact || {}) },
+      footer: {
+        ...DEFAULT_PAGE_SETTINGS.footer,
+        ...(remoteSettings.footer || {}),
+        socials: { ...DEFAULT_PAGE_SETTINGS.footer.socials, ...(remoteSettings?.footer?.socials || {}) },
+      },
+    };
+  };
 
   // Fetch real content from server API with cache busting
   const refreshContent = useCallback(async () => {
@@ -258,6 +435,9 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
           if (json.data.services) setServices(json.data.services);
           if (json.data.inquiries) setInquiries(json.data.inquiries);
+          if (json.data.pageSettings) {
+            setPageSettings(mergePageSettings(json.data.pageSettings));
+          }
 
           saveToLocalStorage(json.data);
           setIsLoading(false);
@@ -276,12 +456,14 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const savedHero = localStorage.getItem(STORAGE_KEYS.HERO);
         const savedServices = localStorage.getItem(STORAGE_KEYS.SERVICES);
         const savedInquiries = localStorage.getItem(STORAGE_KEYS.INQUIRIES);
+        const savedSettings = localStorage.getItem(STORAGE_KEYS.PAGE_SETTINGS);
 
         if (savedTeam) setTeamMembers(JSON.parse(savedTeam));
         if (savedShowcase) setShowcaseItems(JSON.parse(savedShowcase));
         if (savedHero) setHeroSlides(JSON.parse(savedHero));
         if (savedServices) setServices(JSON.parse(savedServices));
         if (savedInquiries) setInquiries(JSON.parse(savedInquiries));
+        if (savedSettings) setPageSettings(mergePageSettings(JSON.parse(savedSettings)));
       }
     } catch (localErr) {
       console.error('LocalStorage read error:', localErr);
@@ -316,6 +498,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
           if (json.data.services) setServices(json.data.services);
           if (json.data.inquiries) setInquiries(json.data.inquiries);
+          if (json.data.pageSettings) setPageSettings(mergePageSettings(json.data.pageSettings));
 
           saveToLocalStorage(json.data);
           return true;
@@ -441,18 +624,72 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return await syncAction('deleteInquiry', { id });
   };
 
+  const updatePageSettings = async (partial: Partial<PageSettings>): Promise<boolean> => {
+    const updated: PageSettings = {
+      branding: { ...pageSettings.branding, ...(partial.branding || {}) },
+      sectionVisibility: { ...pageSettings.sectionVisibility, ...(partial.sectionVisibility || {}) },
+      statement: { ...pageSettings.statement, ...(partial.statement || {}) },
+      creatives: { ...pageSettings.creatives, ...(partial.creatives || {}) },
+      storiesBanner: { ...pageSettings.storiesBanner, ...(partial.storiesBanner || {}) },
+      showreel: { ...pageSettings.showreel, ...(partial.showreel || {}) },
+      contact: { ...pageSettings.contact, ...(partial.contact || {}) },
+      footer: {
+        ...pageSettings.footer,
+        ...(partial.footer || {}),
+        socials: { ...pageSettings.footer.socials, ...(partial.footer?.socials || {}) },
+      },
+    };
+    setPageSettings(updated);
+    saveToLocalStorage({ pageSettings: updated });
+    return await syncAction('updatePageSettings', updated);
+  };
+
+  const updateSectionVisibility = async (visibility: Partial<PageSettings['sectionVisibility']>): Promise<boolean> => {
+    return await updatePageSettings({ sectionVisibility: { ...pageSettings.sectionVisibility, ...visibility } });
+  };
+
+  const updateBranding = async (branding: Partial<PageSettings['branding']>): Promise<boolean> => {
+    return await updatePageSettings({ branding: { ...pageSettings.branding, ...branding } });
+  };
+
+  const updateStatement = async (statement: Partial<PageSettings['statement']>): Promise<boolean> => {
+    return await updatePageSettings({ statement: { ...pageSettings.statement, ...statement } });
+  };
+
+  const updateCreatives = async (creatives: Partial<PageSettings['creatives']>): Promise<boolean> => {
+    return await updatePageSettings({ creatives: { ...pageSettings.creatives, ...creatives } });
+  };
+
+  const updateStoriesBanner = async (banner: Partial<PageSettings['storiesBanner']>): Promise<boolean> => {
+    return await updatePageSettings({ storiesBanner: { ...pageSettings.storiesBanner, ...banner } });
+  };
+
+  const updateShowreel = async (showreel: Partial<PageSettings['showreel']>): Promise<boolean> => {
+    return await updatePageSettings({ showreel: { ...pageSettings.showreel, ...showreel } });
+  };
+
+  const updateContactSettings = async (contact: Partial<PageSettings['contact']>): Promise<boolean> => {
+    return await updatePageSettings({ contact: { ...pageSettings.contact, ...contact } });
+  };
+
+  const updateFooterSettings = async (footer: Partial<PageSettings['footer']>): Promise<boolean> => {
+    return await updatePageSettings({ footer: { ...pageSettings.footer, ...footer } });
+  };
+
   const resetToDefault = async (): Promise<boolean> => {
     setTeamMembers(DEFAULT_TEAM_MEMBERS);
     setShowcaseItems(DEFAULT_SHOWCASE_ITEMS);
     setHeroSlides(DEFAULT_HERO_SLIDES);
     setServices(DEFAULT_SERVICES);
     setInquiries(DEFAULT_INQUIRIES);
+    setPageSettings(DEFAULT_PAGE_SETTINGS);
     saveToLocalStorage({
       teamMembers: DEFAULT_TEAM_MEMBERS,
       showcaseItems: DEFAULT_SHOWCASE_ITEMS,
       heroSlides: DEFAULT_HERO_SLIDES,
       services: DEFAULT_SERVICES,
       inquiries: DEFAULT_INQUIRIES,
+      pageSettings: DEFAULT_PAGE_SETTINGS,
     });
     return await syncAction('resetToDefault');
   };
@@ -465,8 +702,18 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         heroSlides,
         services,
         inquiries,
+        pageSettings,
         isLoading,
         refreshContent,
+        updatePageSettings,
+        updateSectionVisibility,
+        updateBranding,
+        updateStatement,
+        updateCreatives,
+        updateStoriesBanner,
+        updateShowreel,
+        updateContactSettings,
+        updateFooterSettings,
         addTeamMember,
         updateTeamMember,
         deleteTeamMember,

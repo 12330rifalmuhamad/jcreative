@@ -16,12 +16,158 @@ export interface HeroSlide {
   image: string;
 }
 
+export interface PageSettings {
+  branding: {
+    siteTitle: string;
+    logoUrl: string;
+    tagline: string;
+  };
+  sectionVisibility: {
+    hero: boolean;
+    statement: boolean;
+    showcase: boolean;
+    services: boolean;
+    logoMarquee: boolean;
+    creatives: boolean;
+    team: boolean;
+    storiesBanner: boolean;
+    contact: boolean;
+  };
+  statement: {
+    badge: string;
+    title: string;
+    paragraph1: string;
+    paragraph2: string;
+    paragraph3: string;
+    paragraph4: string;
+  };
+  creatives: {
+    badge: string;
+    title: string;
+    description: string;
+    highlightRoles: string[];
+    locationNote: string;
+  };
+  storiesBanner: {
+    badge: string;
+    title: string;
+    description: string;
+    buttonText: string;
+    backgroundImage: string;
+  };
+  showreel: {
+    badge: string;
+    title: string;
+    videoUrl: string;
+    previewImage: string;
+    specsBadge: string;
+  };
+  contact: {
+    badge: string;
+    title: string;
+    description: string;
+    instagram: string;
+    instagramUrl: string;
+    email: string;
+    whatsapp: string;
+    whatsappNumber: string;
+    location: string;
+    successTitle: string;
+    successMessage: string;
+  };
+  footer: {
+    copyright: string;
+    socials: {
+      instagram: string;
+      vimeo: string;
+      youtube: string;
+      linkedin: string;
+    };
+  };
+}
+
+export const DEFAULT_PAGE_SETTINGS: PageSettings = {
+  branding: {
+    siteTitle: 'J Creative Division',
+    logoUrl: '/logo.jpg',
+    tagline: 'Specialist Event Documentation & Media Production',
+  },
+  sectionVisibility: {
+    hero: true,
+    statement: true,
+    showcase: true,
+    services: false,
+    logoMarquee: false,
+    creatives: true,
+    team: true,
+    storiesBanner: true,
+    contact: true,
+  },
+  statement: {
+    badge: 'ABOUT OUR PRODUCTION',
+    title: 'Specialist Event Documentation & Media Production',
+    paragraph1: 'Di dunia dokumentasi event, kami berdedikasi menangkap setiap momen berharga, antusiasme penonton, dan atmosfer magis dari setiap acara—mulai dari konser musik skala besar, festival, hingga corporate gathering dan konferensi nasional.',
+    paragraph2: 'Sebagai rumah produksi spesialis dokumentasi event profesional, kami mendokumentasikan setiap detail acara dengan standar visual sinematik tinggi, sistem multi-kamera 8K, dan drone aerial coverage.',
+    paragraph3: 'Tim videografer dan fotografer kami berpengalaman mengabadikan sorotan penting secara real-time, menyajikan video recap, same-day edit highlight, dan aftermovie berkelas yang siap tayang untuk kebutuhan media sosial & publikasi brand.',
+    paragraph4: 'Dengan pengalaman bertahun-tahun dalam dokumentasi acara berskala besar, kami menjamin eksekusi liputan yang cepat, presisi, dan mampu mengabadikan momen emosional yang berkesan bagi setiap klien.',
+  },
+  creatives: {
+    badge: 'WORLD CLASS CREW',
+    title: 'World Class Event Videographers & Crew',
+    description: 'J Creative didukung oleh tim spesialis liputan event profesional yang siap mengabadikan momen luar biasa di berbagai festival besar, konser, dan konferensi skala internasional.',
+    highlightRoles: [
+      'Event Directors',
+      'Multicam Operators',
+      'Event Photographers',
+      'Drone Pilots',
+    ],
+    locationNote: 'Berbasis di Indonesia dan siap diterjunkan ke lokasi event Anda di mana saja dengan kesiapan peralatan dan tim yang responsif.',
+  },
+  storiesBanner: {
+    badge: 'STORIES & HIGHLIGHTS',
+    title: 'J Creative Event Stories',
+    description: 'Divisi liputan sinematik J Creative khusus mengabadikan kemeriahan, energi, dan emosi autentik dari setiap acara. Kami percaya setiap event memiliki cerita unik yang patut diabadikan dalam bentuk video aftermovie dan foto recap berkelas sinema.',
+    buttonText: 'WATCH EVENT AFTERMOVIE',
+    backgroundImage: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg',
+  },
+  showreel: {
+    badge: 'MASTER CINEMATIC REEL // 2026',
+    title: 'Showreel Concert 2026',
+    videoUrl: '',
+    previewImage: 'https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg',
+    specsBadge: '24fps 48kHz 8K HDR',
+  },
+  contact: {
+    badge: 'GET IN TOUCH',
+    title: "Let's Create Together",
+    description: 'Ready to bring your commercial, music video, or brand documentary vision to life? Connect with our executive producers.',
+    instagram: '@j.creative.official',
+    instagramUrl: 'https://www.instagram.com/j.creative.official/',
+    email: 'contact@jcreative.id',
+    whatsapp: '+62 812-3456-7890',
+    whatsappNumber: '6281234567890',
+    location: 'Jakarta & Bali, Indonesia',
+    successTitle: 'Brief Received',
+    successMessage: 'Our producers at J Creative Division will contact you within 24 hours.',
+  },
+  footer: {
+    copyright: '© 2026 J CREATIVE DIVISION. ALL RIGHTS RESERVED.',
+    socials: {
+      instagram: 'https://www.instagram.com/j.creative.official/',
+      vimeo: 'https://vimeo.com',
+      youtube: 'https://youtube.com',
+      linkedin: 'https://linkedin.com',
+    },
+  },
+};
+
 interface ContentData {
   teamMembers: any[];
   showcaseItems: any[];
   heroSlides: HeroSlide[];
   services: any[];
   inquiries: any[];
+  pageSettings: PageSettings;
 }
 
 const DEFAULT_DATA: ContentData = {
@@ -148,6 +294,7 @@ const DEFAULT_DATA: ContentData = {
       createdAt: '1 Okt 2026, 14.30',
     },
   ],
+  pageSettings: DEFAULT_PAGE_SETTINGS,
 };
 
 function readData(): ContentData {
@@ -169,6 +316,24 @@ function readData(): ContentData {
     }
     if (!parsed.showcaseItems || !Array.isArray(parsed.showcaseItems) || parsed.showcaseItems.length === 0) {
       parsed.showcaseItems = DEFAULT_DATA.showcaseItems;
+    }
+    if (!parsed.pageSettings) {
+      parsed.pageSettings = DEFAULT_PAGE_SETTINGS;
+    } else {
+      parsed.pageSettings = {
+        branding: { ...DEFAULT_PAGE_SETTINGS.branding, ...(parsed.pageSettings.branding || {}) },
+        sectionVisibility: { ...DEFAULT_PAGE_SETTINGS.sectionVisibility, ...(parsed.pageSettings.sectionVisibility || {}) },
+        statement: { ...DEFAULT_PAGE_SETTINGS.statement, ...(parsed.pageSettings.statement || {}) },
+        creatives: { ...DEFAULT_PAGE_SETTINGS.creatives, ...(parsed.pageSettings.creatives || {}) },
+        storiesBanner: { ...DEFAULT_PAGE_SETTINGS.storiesBanner, ...(parsed.pageSettings.storiesBanner || {}) },
+        showreel: { ...DEFAULT_PAGE_SETTINGS.showreel, ...(parsed.pageSettings.showreel || {}) },
+        contact: { ...DEFAULT_PAGE_SETTINGS.contact, ...(parsed.pageSettings.contact || {}) },
+        footer: {
+          ...DEFAULT_PAGE_SETTINGS.footer,
+          ...(parsed.pageSettings.footer || {}),
+          socials: { ...DEFAULT_PAGE_SETTINGS.footer.socials, ...(parsed.pageSettings?.footer?.socials || {}) },
+        },
+      };
     }
     return parsed;
   } catch (error) {
@@ -222,11 +387,32 @@ export async function POST(req: NextRequest) {
             heroSlides: payload.heroSlides || current.heroSlides,
             services: payload.services || current.services,
             inquiries: payload.inquiries || current.inquiries,
+            pageSettings: payload.pageSettings || current.pageSettings,
           };
           writeData(updated);
           return NextResponse.json({ success: true, data: updated });
         }
         break;
+      }
+
+      case 'updatePageSettings': {
+        const settings = payload || {};
+        current.pageSettings = {
+          branding: { ...current.pageSettings.branding, ...(settings.branding || {}) },
+          sectionVisibility: { ...current.pageSettings.sectionVisibility, ...(settings.sectionVisibility || {}) },
+          statement: { ...current.pageSettings.statement, ...(settings.statement || {}) },
+          creatives: { ...current.pageSettings.creatives, ...(settings.creatives || {}) },
+          storiesBanner: { ...current.pageSettings.storiesBanner, ...(settings.storiesBanner || {}) },
+          showreel: { ...current.pageSettings.showreel, ...(settings.showreel || {}) },
+          contact: { ...current.pageSettings.contact, ...(settings.contact || {}) },
+          footer: {
+            ...current.pageSettings.footer,
+            ...(settings.footer || {}),
+            socials: { ...current.pageSettings.footer.socials, ...(settings.footer?.socials || {}) },
+          },
+        };
+        writeData(current);
+        return NextResponse.json({ success: true, data: current });
       }
 
       case 'addTeamMember': {

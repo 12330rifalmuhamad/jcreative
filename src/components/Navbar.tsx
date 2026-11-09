@@ -1,31 +1,40 @@
 'use client';
 
 import { useState } from 'react';
+import { useContent } from '@/context/ContentContext';
 
 interface NavbarProps {
   onOpenContact: () => void;
 }
 
 export default function Navbar({ onOpenContact }: NavbarProps) {
+  const { pageSettings } = useContent();
+  const branding = pageSettings?.branding;
+  const visibility = pageSettings?.sectionVisibility;
+
   const [activeTab, setActiveTab] = useState('WORK');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { name: 'WORK', href: '#work' },
-    { name: 'SERVICES', href: '#services' },
-    { name: 'STORIES', href: '#stories' },
-    { name: 'TALENTS', href: '#talents' },
-    { name: 'MEMBERS', href: '#members' },
-    { name: 'ABOUT', href: '#about' },
+    ...(visibility?.showcase !== false ? [{ name: 'WORK', href: '#work' }] : []),
+    ...(visibility?.services ? [{ name: 'SERVICES', href: '#services' }] : []),
+    ...(visibility?.storiesBanner !== false ? [{ name: 'STORIES', href: '#stories' }] : []),
+    ...(visibility?.creatives !== false ? [{ name: 'TALENTS', href: '#talents' }] : []),
+    ...(visibility?.team !== false ? [{ name: 'MEMBERS', href: '#members' }] : []),
+    ...(visibility?.statement !== false ? [{ name: 'ABOUT', href: '#about' }] : []),
   ];
+
+  const logoUrl = branding?.logoUrl || '/logo.jpg';
+  const siteTitle = branding?.siteTitle || 'J Creative Division';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 py-4 px-5 sm:px-12 bg-gradient-to-b from-black/95 via-black/60 to-transparent flex items-center justify-between">
       {/* Logo Image */}
       <a href="#" className="flex items-center gap-3 select-none">
         <img
-          src="/logo.jpg"
-          alt="J Creative Division Logo"
+          key={logoUrl}
+          src={logoUrl}
+          alt={siteTitle}
           className="h-10 sm:h-20 w-auto object-contain filter invert mix-blend-screen transition-opacity hover:opacity-80"
         />
       </a>
@@ -47,12 +56,14 @@ export default function Navbar({ onOpenContact }: NavbarProps) {
             )}
           </a>
         ))}
-        <button
-          onClick={onOpenContact}
-          className="text-slate-400 hover:text-white transition-colors cursor-pointer"
-        >
-          CONTACT
-        </button>
+        {visibility?.contact !== false && (
+          <button
+            onClick={onOpenContact}
+            className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+          >
+            CONTACT
+          </button>
+        )}
       </nav>
 
       {/* Mobile Hamburger Button */}
@@ -84,15 +95,17 @@ export default function Navbar({ onOpenContact }: NavbarProps) {
               {item.name}
             </a>
           ))}
-          <button
-            onClick={() => {
-              onOpenContact();
-              setIsMobileMenuOpen(false);
-            }}
-            className="text-left py-2 text-white font-extrabold tracking-widest uppercase border-t border-white/10 pt-4"
-          >
-            CONTACT →
-          </button>
+          {visibility?.contact !== false && (
+            <button
+              onClick={() => {
+                onOpenContact();
+                setIsMobileMenuOpen(false);
+              }}
+              className="text-left py-2 text-white font-extrabold tracking-widest uppercase border-t border-white/10 pt-4"
+            >
+              CONTACT →
+            </button>
+          )}
         </div>
       )}
     </header>

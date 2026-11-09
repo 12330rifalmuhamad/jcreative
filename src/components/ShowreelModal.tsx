@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useContent } from '@/context/ContentContext';
 
 interface ShowreelModalProps {
   isOpen: boolean;
@@ -9,11 +10,34 @@ interface ShowreelModalProps {
 }
 
 export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
+  const { pageSettings } = useContent();
+  const showreel = pageSettings?.showreel;
+
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [quality, setQuality] = useState('8K HDR');
 
   if (!isOpen) return null;
+
+  const previewImg = showreel?.previewImage || '/images/DSC03485.jpg';
+  const videoUrl = showreel?.videoUrl?.trim();
+  const isYouTube = videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'));
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    try {
+      if (url.includes('youtu.be/')) {
+        const id = url.split('youtu.be/')[1]?.split('?')[0];
+        return `https://www.youtube.com/embed/${id}?autoplay=1&mute=${isMuted ? 1 : 0}`;
+      }
+      if (url.includes('watch?v=')) {
+        const id = url.split('watch?v=')[1]?.split('&')[0];
+        return `https://www.youtube.com/embed/${id}?autoplay=1&mute=${isMuted ? 1 : 0}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 sm:p-8 animate-fadeIn">
@@ -24,8 +48,13 @@ export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
             <span className="text-xs font-mono font-bold tracking-widest text-white uppercase">
-              MASTER CINEMATIC REEL // 2026
+              {showreel?.badge || 'MASTER CINEMATIC REEL // 2026'}
             </span>
+            {showreel?.title && (
+              <span className="text-xs text-slate-400 border-l border-white/20 pl-3 hidden sm:inline">
+                {showreel.title}
+              </span>
+            )}
           </div>
 
           <button
@@ -39,42 +68,68 @@ export default function ShowreelModal({ isOpen, onClose }: ShowreelModalProps) {
 
         {/* Video Player Display Container */}
         <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden group">
-          <Image
-            src="/images/DSC03485.jpg"
-            alt="Showreel Preview"
-            fill
-            sizes="(max-width: 1024px) 100vw, 1024px"
-            className={`object-cover filter contrast-125 ${
-              isPlaying ? 'brightness-100 scale-100' : 'brightness-50 scale-105'
-            } transition-all duration-700`}
-          />
-
-          {/* Audio Visualizer Wave Overlay */}
-          {isPlaying && (
-            <div className="absolute top-6 left-6 flex items-end gap-1 h-6 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <span className="w-1 bg-white h-full animate-bounce" />
-              <span className="w-1 bg-white h-3/4 animate-bounce delay-75" />
-              <span className="w-1 bg-white h-1/2 animate-bounce delay-150" />
-              <span className="w-1 bg-white h-5/6 animate-bounce delay-100" />
-              <span className="text-[10px] font-bold text-slate-300 ml-2 uppercase">24fps 48kHz</span>
-            </div>
-          )}
-
-          {/* Overlay Play/Pause Button */}
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="absolute z-20 w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white flex items-center justify-center group-hover:scale-110 hover:bg-white hover:text-black transition-all cursor-pointer shadow-2xl"
-          >
-            {isPlaying ? (
-              <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
+          {videoUrl ? (
+            isYouTube ? (
+              <iframe
+                src={getYouTubeEmbedUrl(videoUrl)}
+                title="Showreel Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
             ) : (
-              <svg className="w-8 h-8 fill-current translate-x-1" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </button>
+              <video
+                src={videoUrl}
+                controls
+                autoPlay={isPlaying}
+                muted={isMuted}
+                loop
+                className="w-full h-full object-cover"
+              />
+            )
+          ) : (
+            <>
+              <Image
+                key={previewImg}
+                src={previewImg}
+                alt={showreel?.title || 'Showreel Preview'}
+                fill
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                className={`object-cover filter contrast-125 ${
+                  isPlaying ? 'brightness-100 scale-100' : 'brightness-50 scale-105'
+                } transition-all duration-700`}
+              />
+
+              {/* Audio Visualizer Wave Overlay */}
+              {isPlaying && (
+                <div className="absolute top-6 left-6 flex items-end gap-1 h-6 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                  <span className="w-1 bg-white h-full animate-bounce" />
+                  <span className="w-1 bg-white h-3/4 animate-bounce delay-75" />
+                  <span className="w-1 bg-white h-1/2 animate-bounce delay-150" />
+                  <span className="w-1 bg-white h-5/6 animate-bounce delay-100" />
+                  <span className="text-[10px] font-bold text-slate-300 ml-2 uppercase">
+                    {showreel?.specsBadge || '24fps 48kHz'}
+                  </span>
+                </div>
+              )}
+
+              {/* Overlay Play/Pause Button */}
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="absolute z-20 w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white flex items-center justify-center group-hover:scale-110 hover:bg-white hover:text-black transition-all cursor-pointer shadow-2xl"
+              >
+                {isPlaying ? (
+                  <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-8 h-8 fill-current translate-x-1" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+            </>
+          )}
 
           {/* Watermark Logo */}
           <div className="absolute bottom-6 right-6 opacity-40 pointer-events-none">

@@ -121,5 +121,79 @@
       "category": "End-to-End Creative Film & Media Production",
       "image": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997587/jcreative/hero/dsc02194.jpg"
     }
-  ]
+  ],
+  "pageSettings": {
+    "branding": {
+      "siteTitle": "J Creative Division",
+      "logoUrl": "/logo.jpg",
+      "tagline": "Premier Event Cinema & Production"
+    },
+    "sectionVisibility": {
+      "hero": true,
+      "statement": true,
+      "showcase": true,
+      "services": false,
+      "logoMarquee": false,
+      "creatives": true,
+      "team": true,
+      "storiesBanner": true,
+      "contact": true
+    },
+    "statement": {
+      "badge": "ABOUT OUR PRODUCTION",
+      "title": "Specialist Event Documentation & Media Production",
+      "paragraph1": "Di dunia dokumentasi event, kami berdedikasi menangkap setiap momen berharga, antusiasme penonton, dan atmosfer magis dari setiap acara—mulai dari konser musik skala besar, festival, hingga corporate gathering dan konferensi nasional.",
+      "paragraph2": "Sebagai rumah produksi spesialis dokumentasi event profesional, kami mendokumentasikan setiap detail acara dengan standar visual sinematik tinggi, sistem multi-kamera 8K, dan drone aerial coverage.",
+      "paragraph3": "Tim videografer dan fotografer kami berpengalaman mengabadikan sorotan penting secara real-time, menyajikan video recap, same-day edit highlight, dan aftermovie berkelas yang siap tayang untuk kebutuhan media sosial & publikasi brand.",
+      "paragraph4": "Dengan pengalaman bertahun-tahun dalam dokumentasi acara berskala besar, kami menjamin eksekusi liputan yang cepat, presisi, dan mampu mengabadikan momen emosional yang berkesan bagi setiap klien."
+    },
+    "creatives": {
+      "badge": "WORLD CLASS CREW",
+      "title": "World Class Event Videographers & Crew",
+      "description": "J Creative didukung oleh tim spesialis liputan event profesional yang siap mengabadikan momen luar biasa di berbagai festival besar, konser, dan konferensi skala internasional.",
+      "highlightRoles": [
+        "Event Directors",
+        "Multicam Operators",
+        "Event Photographers",
+        "Drone Pilots"
+      ],
+      "locationNote": "Berbasis di Indonesia dan siap diterjunkan ke lokasi event Anda di mana saja dengan kesiapan peralatan dan tim yang responsif."
+    },
+    "storiesBanner": {
+      "badge": "STORIES & HIGHLIGHTS",
+      "title": "J Creative Event Stories",
+      "description": "Divisi liputan sinematik J Creative khusus mengabadikan kemeriahan, energi, dan emosi autentik dari setiap acara. Kami percaya setiap event memiliki cerita unik yang patut diabadikan dalam bentuk video aftermovie dan foto recap berkelas sinema.",
+      "buttonText": "WATCH EVENT AFTERMOVIE",
+      "backgroundImage": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790997521/jcreative/showcase/dsc03481.jpg"
+    },
+    "showreel": {
+      "badge": "MASTER CINEMATIC REEL // 2026",
+      "title": "Showreel Concert 2026",
+      "videoUrl": "",
+      "previewImage": "https://res.cloudinary.com/dn4bhcsuh/image/upload/v1790953351/jcreative/showcase/dsc03485.jpg",
+      "specsBadge": "24fps 48kHz 8K HDR"
+    },
+    "contact": {
+      "badge": "GET IN TOUCH",
+      "title": "Let's Create Together",
+      "description": "Ready to bring your commercial, music video, or brand documentary vision to life? Connect with our executive producers.",
+      "instagram": "@j.creative.official",
+      "instagramUrl": "https://www.instagram.com/j.creative.official/",
+      "email": "contact@jcreative.id",
+      "whatsapp": "+62 812-3456-7890",
+      "whatsappNumber": "6281234567890",
+      "location": "Jakarta & Bali, Indonesia",
+      "successTitle": "Brief Received",
+      "successMessage": "Our producers at J Creative Division will contact you within 24 hours."
+    },
+    "footer": {
+      "copyright": "© 2026 J CREATIVE DIVISION. ALL RIGHTS RESERVED.",
+      "socials": {
+        "instagram": "https://www.instagram.com/j.creative.official/",
+        "vimeo": "https://vimeo.com",
+        "youtube": "https://youtube.com",
+        "linkedin": "https://linkedin.com"
+      }
+    }
+  }
 }
