@@ -147,17 +147,15 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
                     key={type.id}
                     type="button"
                     onClick={() => setSelectedType(type.id)}
-                    className={`p-4 rounded-xl text-left transition-all cursor-pointer border ${
-                      selectedType === type.id
+                    className={`p-4 rounded-xl text-left transition-all cursor-pointer border ${selectedType === type.id
                         ? 'bg-white text-black border-white shadow-md'
                         : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     <div className="text-xs font-bold leading-tight">{type.label}</div>
                     <div
-                      className={`text-[10px] font-mono mt-1 ${
-                        selectedType === type.id ? 'text-slate-700' : 'text-slate-400'
-                      }`}
+                      className={`text-[10px] font-mono mt-1 ${selectedType === type.id ? 'text-slate-700' : 'text-slate-400'
+                        }`}
                     >
                       {type.sub}
                     </div>
@@ -202,17 +200,15 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
                     key={pkg.id}
                     type="button"
                     onClick={() => setSelectedGear(pkg.id)}
-                    className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${
-                      selectedGear === pkg.id
+                    className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${selectedGear === pkg.id
                         ? 'bg-white text-black border-white shadow-md'
                         : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     <div className="text-xs font-black uppercase">{pkg.title}</div>
                     <div
-                      className={`text-[9px] font-mono mt-1 ${
-                        selectedGear === pkg.id ? 'text-slate-700' : 'text-slate-400'
-                      }`}
+                      className={`text-[9px] font-mono mt-1 ${selectedGear === pkg.id ? 'text-slate-700' : 'text-slate-400'
+                        }`}
                     >
                       {pkg.sub}
                     </div>
@@ -230,11 +226,10 @@ export default function EstimateCalculator({ onSelectEstimate }: EstimateCalcula
                 {ADDONS.map((addon) => (
                   <label
                     key={addon.key}
-                    className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs cursor-pointer transition-colors ${
-                      selectedAddons[addon.key]
+                    className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs cursor-pointer transition-colors ${selectedAddons[addon.key]
                         ? 'bg-white/15 border-white/40 text-white'
                         : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     <input
                       type="checkbox"
