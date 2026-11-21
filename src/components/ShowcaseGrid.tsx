@@ -94,17 +94,21 @@ export default function ShowcaseGrid() {
 
               <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono text-slate-400">
-                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300">
-                    🎥 Multi-Camera 8K
+                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300 inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Multi-Camera 8K</span>
                   </span>
-                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300">
-                    🔊 Stereo Audio Feed
+                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300 inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Stereo Audio Feed</span>
                   </span>
-                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300">
-                    🚁 Drone Aerial 4K
+                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300 inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Drone Aerial 4K</span>
                   </span>
-                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300">
-                    ⚡ Express Recap
+                  <span className="px-2.5 py-1 bg-white/5 rounded-md border border-white/10 text-slate-300 inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>Express Recap</span>
                   </span>
                 </div>
 

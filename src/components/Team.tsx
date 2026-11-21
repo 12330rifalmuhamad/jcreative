@@ -81,7 +81,10 @@ export default function Team() {
               {/* Card Footer / Highlights */}
               <div className="px-6 pb-6 pt-2 border-t border-white/10 mt-auto">
                 <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
-                  <span>★ {member.highlights}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>{member.highlights}</span>
+                  </span>
                 </div>
               </div>
             </div>

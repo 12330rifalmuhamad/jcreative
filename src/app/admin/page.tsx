@@ -745,7 +745,9 @@ export default function AdminPage() {
 
             {authError && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs font-mono flex items-center gap-2 animate-fadeIn">
-                <span className="text-sm">⚠</span>
+                <svg className="w-4 h-4 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
                 <span>{authError}</span>
               </div>
             )}
@@ -993,7 +995,9 @@ export default function AdminPage() {
                 onClick={() => handleSavePageSettings()}
                 className="px-6 py-3.5 bg-white text-black font-extrabold uppercase text-xs tracking-widest hover:bg-slate-200 transition-colors cursor-pointer inline-flex items-center gap-2 rounded shadow-lg"
               >
-                <span>💾</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
                 <span>Simpan Semua Pengaturan</span>
               </button>
             )}
@@ -1200,14 +1204,14 @@ export default function AdminPage() {
             {/* Sub-tab Navigation Pills */}
             <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
               {[
-                { id: 'visibility', label: '🎛️ Tata Letak & Visibilitas Seksi' },
-                { id: 'branding', label: '🏷️ Logo & Identitas Brand' },
-                { id: 'statement', label: '📝 About / Editorial Statement' },
-                { id: 'creatives', label: '👥 Talenta & Kru' },
-                { id: 'stories', label: '🎬 Stories Banner' },
-                { id: 'showreel', label: '🎥 Showreel Video' },
-                { id: 'contact', label: '📞 Kontak & Sosmed' },
-                { id: 'footer', label: '🌐 Footer & Legal' },
+                { id: 'visibility', label: 'Tata Letak & Visibilitas Seksi' },
+                { id: 'branding', label: 'Logo & Identitas Brand' },
+                { id: 'statement', label: 'About / Editorial Statement' },
+                { id: 'creatives', label: 'Talenta & Kru' },
+                { id: 'stories', label: 'Stories Banner' },
+                { id: 'showreel', label: 'Showreel Video' },
+                { id: 'contact', label: 'Kontak & Sosmed' },
+                { id: 'footer', label: 'Footer & Legal' },
               ].map((sub) => (
                 <button
                   key={sub.id}
@@ -1255,7 +1259,7 @@ export default function AdminPage() {
                     {
                       key: 'statement' as const,
                       title: 'About / Editorial Statement',
-                      desc: 'Pernyataan visi dokumentasi sinematik & teknologi multi-kamera 8K.',
+                      desc: 'Pernyataan visi dokumentasi sinematik & dedikasi pengalaman profesional.',
                       subTabTarget: 'statement' as const,
                     },
                     {
@@ -1589,15 +1593,12 @@ export default function AdminPage() {
 
                   <div className="space-y-4 pt-2">
                     <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                      Paragraf Editorial (Tampil di Kolom Kanan)
+                      Paragraf Editorial (1 Paragraf Fokus Pengalaman Profesional)
                     </label>
 
                     <div>
-                      <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
-                        Paragraf 1 (Pembuka &amp; Fokus Acara):
-                      </span>
                       <textarea
-                        rows={3}
+                        rows={6}
                         value={pageSettingsForm.statement.paragraph1}
                         onChange={(e) =>
                           setPageSettingsForm({
@@ -1608,66 +1609,7 @@ export default function AdminPage() {
                             },
                           })
                         }
-                        className="w-full p-4 bg-black border border-white/15 text-white text-xs font-light focus:outline-none focus:border-white rounded leading-relaxed"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
-                        Paragraf 2 (Teknologi &amp; Spesifikasi 8K Multicam):
-                      </span>
-                      <textarea
-                        rows={3}
-                        value={pageSettingsForm.statement.paragraph2}
-                        onChange={(e) =>
-                          setPageSettingsForm({
-                            ...pageSettingsForm,
-                            statement: {
-                              ...pageSettingsForm.statement,
-                              paragraph2: e.target.value,
-                            },
-                          })
-                        }
-                        className="w-full p-4 bg-black border border-white/15 text-white text-xs font-light focus:outline-none focus:border-white rounded leading-relaxed"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
-                        Paragraf 3 (Kecepatan Editor &amp; Same-day Recap):
-                      </span>
-                      <textarea
-                        rows={3}
-                        value={pageSettingsForm.statement.paragraph3}
-                        onChange={(e) =>
-                          setPageSettingsForm({
-                            ...pageSettingsForm,
-                            statement: {
-                              ...pageSettingsForm.statement,
-                              paragraph3: e.target.value,
-                            },
-                          })
-                        }
-                        className="w-full p-4 bg-black border border-white/15 text-white text-xs font-light focus:outline-none focus:border-white rounded leading-relaxed"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 uppercase block mb-1">
-                        Paragraf 4 (Komitmen &amp; Rekam Jejak):
-                      </span>
-                      <textarea
-                        rows={3}
-                        value={pageSettingsForm.statement.paragraph4}
-                        onChange={(e) =>
-                          setPageSettingsForm({
-                            ...pageSettingsForm,
-                            statement: {
-                              ...pageSettingsForm.statement,
-                              paragraph4: e.target.value,
-                            },
-                          })
-                        }
+                        placeholder="Tuliskan narasi 1 paragraf tentang dedikasi dan pengalaman profesional studio Anda..."
                         className="w-full p-4 bg-black border border-white/15 text-white text-xs font-light focus:outline-none focus:border-white rounded leading-relaxed"
                       />
                     </div>
@@ -2716,8 +2658,9 @@ export default function AdminPage() {
                         <p className="text-xs text-slate-400 font-light leading-relaxed">{member.bio}</p>
 
                         {member.highlights && (
-                          <div className="text-[10px] font-mono text-slate-400 font-bold uppercase">
-                            ★ {member.highlights}
+                          <div className="text-[10px] font-mono text-slate-400 font-bold uppercase flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            <span>{member.highlights}</span>
                           </div>
                         )}
                       </div>
@@ -3062,7 +3005,10 @@ export default function AdminPage() {
                         onClick={() => setQuickApplyModal({ isOpen: true, url: m.secure_url })}
                         className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-mono font-black uppercase tracking-wider rounded transition-colors inline-flex items-center justify-center gap-1.5 shadow"
                       >
-                        <span>🌟 Gunakan Foto Ini</span>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Gunakan Foto Ini</span>
                       </button>
 
                       <div className="flex items-center gap-2">
@@ -3220,14 +3166,20 @@ export default function AdminPage() {
                               rel="noopener noreferrer"
                               className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-mono font-bold uppercase transition-colors inline-flex items-center gap-1"
                             >
-                              <span>💬 Hubungi WA</span>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                              <span>Hubungi WA</span>
                             </a>
                           )}
                           <a
                             href={`mailto:${inq.email}?subject=Tindak%20Lanjut%20Brief%20Event%20J%20Creative`}
                             className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-[10px] font-mono font-bold uppercase transition-colors inline-flex items-center gap-1"
                           >
-                            <span>✉ Balas Email</span>
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <span>Balas Email</span>
                           </a>
                         </div>
                       </div>
